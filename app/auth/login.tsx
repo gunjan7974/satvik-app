@@ -1,31 +1,48 @@
-import React, { useState } from "react";
-import axios from "axios";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { BASE_URL } from "../../config/api";
-
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
-  TextInput,
-  TouchableOpacity,
   StyleSheet,
-  Alert,
-  Dimensions,
-  KeyboardAvoidingView,
-  Platform,
   ScrollView,
   SafeAreaView,
+  TouchableOpacity,
+  TextInput,
+  Dimensions,
+  Animated,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
   Image,
+  BackHandler
 } from "react-native";
-import { router } from "expo-router";
-import { useAuth } from "../data/AuthContext";
 import { Ionicons } from "@expo/vector-icons";
-import Animated, { FadeInDown, FadeIn } from "react-native-reanimated";
+import { useRouter } from "expo-router";
+import axios from "axios";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FadeIn, FadeInDown } from "react-native-reanimated";
 
+import { useAuth } from "../data/AuthContext";
+import { BASE_URL } from "../../config/api";
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
 
 export default function Login() {
+  const router = useRouter();
+
+useEffect(() => {
+  const backAction = () => {
+    router.replace("/");
+    return true; 
+  };
+
+  const backHandler = BackHandler.addEventListener(
+    "hardwareBackPress",
+    backAction
+  );
+
+  return () => backHandler.remove();
+}, []);
+
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -33,49 +50,49 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleLogin = async () => {
-  if (!email.trim() || !password.trim()) {
-    Alert.alert("Error", "Please fill all fields");
-    return;
-  }
+    if (!email.trim() || !password.trim()) {
+      Alert.alert("Error", "Please fill all fields");
+      return;
+    }
 
-  setIsLoading(true);
+    setIsLoading(true);
 
-  try {
-    const response = await axios.post(
-      `${BASE_URL}/api/auth/login`,
-      {
-        email: email.trim(),
-        password: password.trim(),
-      }
-    );
+    try {
+      const response = await axios.post(
+        `${BASE_URL}/api/auth/login`,
+        {
+          email: email.trim(),
+          password: password.trim(),
+        }
+      );
 
-    const userData = response.data;
+      const userData = response.data;
 
-    console.log("Login Success:", userData);
+      console.log("Login Success:", userData);
 
-    // 🔐 Save token
-    await AsyncStorage.setItem("token", userData.token);
+      // ðŸ” Save token
+      await AsyncStorage.setItem("token", userData.token);
 
-    // 💾 Save full user data
-    await AsyncStorage.setItem("userInfo", JSON.stringify(userData));
+      // ðŸ’¾ Save full user data
+      await AsyncStorage.setItem("userInfo", JSON.stringify(userData));
 
-    // 🧠 Update Auth Context
-    await login(userData);
+      // ðŸ§  Update Auth Context
+      await login(userData);
 
-    // 🚀 Redirect to Home
-    router.replace("/");
+      // ðŸš€ Redirect to Home
+      router.replace("/");
 
-  } catch (error) {
-    console.log("Login Error:", error.response?.data);
+    } catch (error) {
+      console.log("Login Error:", error.response?.data);
 
-    Alert.alert(
-      "Login Failed",
-      error.response?.data?.message || "Invalid email or password"
-    );
-  } finally {
-    setIsLoading(false);
-  }
-};
+      Alert.alert(
+        "Login Failed",
+        error.response?.data?.message || "Invalid email or password"
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
 
   const handleGuestLogin = () => {
@@ -84,9 +101,9 @@ export default function Login() {
       "You can browse the menu, but ordering requires login",
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Continue", 
-          onPress: () => router.replace("/")
+        {
+          text: "Continue",
+          onPress: () => router.push("/")
         }
       ]
     );
@@ -98,59 +115,58 @@ export default function Login() {
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardView}
       >
-        <ScrollView 
+        <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={styles.scrollContent}
         >
           {/* Header Section */}
-          <Animated.View 
+          <Animated.View
             entering={FadeIn.duration(600)}
             style={styles.header}
           >
-            <TouchableOpacity 
+            <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.back()}
-            >
+              onPress={() => router.replace("/")}>
               <Ionicons name="arrow-back" size={24} color="#FF8A00" />
             </TouchableOpacity>
-            
+
             <View style={styles.logoContainer}>
-              
+
               <Text style={styles.appName}>Sattvik Kaleva</Text>
             </View>
           </Animated.View>
 
           {/* Main Content */}
           <View style={styles.content}>
-            <Animated.View 
+            <Animated.View
               entering={FadeInDown.delay(200).duration(600)}
               style={styles.formContainer}
             >
               <Text style={styles.welcomeText}>Welcome Back!</Text>
               <Text style={styles.subTitle}>Sign in to continue your food journey</Text>
 
-            {/* Email Input */}
-<Animated.View 
-  entering={FadeInDown.delay(300).duration(600)}
-  style={styles.inputContainer}
->
-  <View style={styles.inputIcon}>
-    <Ionicons name="mail-outline" size={20} color="#999" />
-  </View>
-  <TextInput
-    style={styles.input}
-    placeholder="Email"
-    placeholderTextColor="#999"
-    keyboardType="email-address"
-    autoCapitalize="none"
-    value={email}
-    onChangeText={setEmail}
-  />
-</Animated.View>
+              {/* Email Input */}
+              <Animated.View
+                entering={FadeInDown.delay(300).duration(600)}
+                style={styles.inputContainer}
+              >
+                <View style={styles.inputIcon}>
+                  <Ionicons name="mail-outline" size={20} color="#999" />
+                </View>
+                <TextInput
+                  style={styles.input}
+                  placeholder="Email"
+                  placeholderTextColor="#999"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </Animated.View>
 
 
               {/* Password Input */}
-              <Animated.View 
+              <Animated.View
                 entering={FadeInDown.delay(400).duration(600)}
                 style={styles.inputContainer}
               >
@@ -165,14 +181,14 @@ export default function Login() {
                   value={password}
                   onChangeText={setPassword}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => setShowPassword(!showPassword)}
                 >
-                  <Ionicons 
-                    name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                    size={20} 
-                    color="#999" 
+                  <Ionicons
+                    name={showPassword ? "eye-off-outline" : "eye-outline"}
+                    size={20}
+                    color="#999"
                   />
                 </TouchableOpacity>
               </Animated.View>
@@ -183,11 +199,11 @@ export default function Login() {
               </TouchableOpacity>
 
               {/* Login Button */}
-              <Animated.View 
+              <Animated.View
                 entering={FadeInDown.delay(500).duration(600)}
                 style={styles.buttonContainer}
               >
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.loginButton,
                     isLoading && styles.loginButtonDisabled
@@ -210,7 +226,7 @@ export default function Login() {
               </Animated.View>
 
               {/* Divider */}
-              <Animated.View 
+              <Animated.View
                 entering={FadeInDown.delay(600).duration(600)}
                 style={styles.dividerContainer}
               >
@@ -220,11 +236,11 @@ export default function Login() {
               </Animated.View>
 
               {/* Alternative Options */}
-              <Animated.View 
+              <Animated.View
                 entering={FadeInDown.delay(700).duration(600)}
                 style={styles.alternativeContainer}
               >
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.googleButton}
                   onPress={() => Alert.alert("Coming Soon", "Google login feature coming soon!")}
                 >
@@ -235,7 +251,7 @@ export default function Login() {
                   <Text style={styles.googleButtonText}>Continue with Google</Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.guestButton}
                   onPress={handleGuestLogin}
                 >
@@ -245,7 +261,7 @@ export default function Login() {
               </Animated.View>
 
               {/* Sign Up Link */}
-              <Animated.View 
+              <Animated.View
                 entering={FadeInDown.delay(800).duration(600)}
                 style={styles.signupContainer}
               >

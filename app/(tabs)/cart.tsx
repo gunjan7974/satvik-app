@@ -18,6 +18,326 @@ import {
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { useTheme } from "../data/ThemeContext";
+
+// 🔥 TRANSLATIONS FOR 5 LANGUAGES
+const translations = {
+  en: {
+    // Header
+    myCart: "My Cart",
+    items: "items",
+    item: "item",
+    favorites: "Favorites",
+    
+    // Order Status
+    orderSuccessful: "Order Successful! 🎉",
+    orderCancelled: "Order Cancelled",
+    orderId: "Order ID",
+    total: "Total",
+    yourOrderPlaced: "Your order has been placed successfully and will be delivered soon.",
+    yourOrderCancelled: "Your order has been cancelled successfully.",
+    processingOrder: "Processing your order...",
+    pleaseWait: "Please wait",
+    
+    // Buttons
+    viewOrders: "View Orders",
+    continueShopping: "Continue Shopping",
+    backToCart: "Back to Cart",
+    browseMenu: "Browse Menu",
+    viewMyOrders: "View My Orders",
+    apply: "Apply",
+    applied: "Applied",
+    cancel: "Cancel",
+    placeOrder: "Place Order",
+    
+    // Cart States
+    cartEmpty: "Your cart is empty",
+    addItems: "Add delicious items to get started!",
+    
+    // Sections
+    orderItems: "Order Items",
+    specialInstructions: "Special Instructions",
+    applyCoupon: "Apply Coupon",
+    billSummary: "Bill Summary",
+    
+    // Instructions Placeholder
+    instructionsPlaceholder: "Any special requests or dietary restrictions...",
+    couponPlaceholder: "Enter coupon code",
+    
+    // Bill Summary Labels
+    subtotal: "Subtotal",
+    deliveryFee: "Delivery Fee",
+    free: "FREE",
+    tax: "Tax (5%)",
+    discount: "Discount (10%)",
+    totalAmount: "Total Amount",
+    
+    // Coupon Messages
+    couponApplied: "Coupon \"{code}\" applied! 10% discount",
+    invalidCoupon: "Invalid Coupon",
+    enterValidCoupon: "Please enter a valid coupon code",
+    success: "Success!",
+    discountApplied: "10% discount applied! 🎉",
+    
+    // Delivery Message
+    addMoreForFreeDelivery: "Add ₹{amount} more for FREE delivery!",
+    
+    // Alerts
+    error: "Error",
+    orderFailed: "Order failed",
+    cancelOrder: "Cancel Order",
+    cancelConfirm: "Are you sure you want to cancel this order?",
+    no: "No",
+    yesCancel: "Yes, Cancel",
+    
+    // Rating
+    rating: "Rating",
+  },
+
+  hi: {
+    myCart: "मेरा कार्ट",
+    items: "आइटम",
+    item: "आइटम",
+    favorites: "पसंदीदा",
+    
+    orderSuccessful: "ऑर्डर सफल! 🎉",
+    orderCancelled: "ऑर्डर रद्द",
+    orderId: "ऑर्डर आईडी",
+    total: "कुल",
+    yourOrderPlaced: "आपका ऑर्डर सफलतापूर्वक रखा गया है और जल्द ही डिलीवर कर दिया जाएगा।",
+    yourOrderCancelled: "आपका ऑर्डर सफलतापूर्वक रद्द कर दिया गया है।",
+    processingOrder: "आपका ऑर्डर प्रोसेस हो रहा है...",
+    pleaseWait: "कृपया प्रतीक्षा करें",
+    
+    viewOrders: "ऑर्डर देखें",
+    continueShopping: "खरीदारी जारी रखें",
+    backToCart: "कार्ट पर वापस जाएं",
+    browseMenu: "मेनू ब्राउज़ करें",
+    viewMyOrders: "मेरे ऑर्डर देखें",
+    apply: "लागू करें",
+    applied: "लागू",
+    cancel: "रद्द करें",
+    placeOrder: "ऑर्डर दें",
+    
+    cartEmpty: "आपका कार्ट खाली है",
+    addItems: "शुरू करने के लिए स्वादिष्ट आइटम जोड़ें!",
+    
+    orderItems: "ऑर्डर आइटम",
+    specialInstructions: "विशेष निर्देश",
+    applyCoupon: "कूपन लागू करें",
+    billSummary: "बिल सारांश",
+    
+    instructionsPlaceholder: "कोई विशेष अनुरोध या आहार प्रतिबंध...",
+    couponPlaceholder: "कूपन कोड दर्ज करें",
+    
+    subtotal: "उप-योग",
+    deliveryFee: "डिलीवरी शुल्क",
+    free: "मुफ्त",
+    tax: "कर (5%)",
+    discount: "छूट (10%)",
+    totalAmount: "कुल राशि",
+    
+    couponApplied: "कूपन \"{code}\" लागू! 10% छूट",
+    invalidCoupon: "अमान्य कूपन",
+    enterValidCoupon: "कृपया एक मान्य कूपन कोड दर्ज करें",
+    success: "सफलता!",
+    discountApplied: "10% छूट लागू! 🎉",
+    
+    addMoreForFreeDelivery: "मुफ्त डिलीवरी के लिए ₹{amount} और जोड़ें!",
+    
+    error: "त्रुटि",
+    orderFailed: "ऑर्डर विफल",
+    cancelOrder: "ऑर्डर रद्द करें",
+    cancelConfirm: "क्या आप वाकई यह ऑर्डर रद्द करना चाहते हैं?",
+    no: "नहीं",
+    yesCancel: "हां, रद्द करें",
+    
+    rating: "रेटिंग",
+  },
+
+  mr: {
+    myCart: "माझी कार्ट",
+    items: "वस्तू",
+    item: "वस्तू",
+    favorites: "आवडते",
+    
+    orderSuccessful: "ऑर्डर यशस्वी! 🎉",
+    orderCancelled: "ऑर्डर रद्द",
+    orderId: "ऑर्डर आयडी",
+    total: "एकूण",
+    yourOrderPlaced: "तुमचा ऑर्डर यशस्वीरित्या ठेवला गेला आहे आणि लवकरच वितरित केला जाईल.",
+    yourOrderCancelled: "तुमचा ऑर्डर यशस्वीरित्या रद्द करण्यात आला आहे.",
+    processingOrder: "तुमचा ऑर्डर प्रोसेस होत आहे...",
+    pleaseWait: "कृपया प्रतीक्षा करा",
+    
+    viewOrders: "ऑर्डर पहा",
+    continueShopping: "खरेदी सुरू ठेवा",
+    backToCart: "कार्टवर परत जा",
+    browseMenu: "मेनू ब्राउझ करा",
+    viewMyOrders: "माझे ऑर्डर पहा",
+    apply: "लागू करा",
+    applied: "लागू",
+    cancel: "रद्द करा",
+    placeOrder: "ऑर्डर द्या",
+    
+    cartEmpty: "तुमची कार्ट रिकामी आहे",
+    addItems: "सुरू करण्यासाठी स्वादिष्ट वस्तू जोडा!",
+    
+    orderItems: "ऑर्डर वस्तू",
+    specialInstructions: "विशेष सूचना",
+    applyCoupon: "कूपन लागू करा",
+    billSummary: "बिल सारांश",
+    
+    instructionsPlaceholder: "कोणत्याही विशेष विनंत्या किंवा आहार निर्बंध...",
+    couponPlaceholder: "कूपन कोड प्रविष्ट करा",
+    
+    subtotal: "उप-एकूण",
+    deliveryFee: "वितरण शुल्क",
+    free: "मोफत",
+    tax: "कर (5%)",
+    discount: "सूट (10%)",
+    totalAmount: "एकूण रक्कम",
+    
+    couponApplied: "कूपन \"{code}\" लागू! 10% सूट",
+    invalidCoupon: "अवैध कूपन",
+    enterValidCoupon: "कृपया वैध कूपन कोड प्रविष्ट करा",
+    success: "यशस्वी!",
+    discountApplied: "10% सूट लागू! 🎉",
+    
+    addMoreForFreeDelivery: "मोफत वितरणासाठी ₹{amount} अधिक जोडा!",
+    
+    error: "त्रुटी",
+    orderFailed: "ऑर्डर अयशस्वी",
+    cancelOrder: "ऑर्डर रद्द करा",
+    cancelConfirm: "तुम्हाला खात्री आहे की हा ऑर्डर रद्द करायचा आहे?",
+    no: "नाही",
+    yesCancel: "होय, रद्द करा",
+    
+    rating: "रेटिंग",
+  },
+
+  ta: {
+    myCart: "எனது வண்டி",
+    items: "பொருட்கள்",
+    item: "பொருள்",
+    favorites: "பிடித்தவை",
+    
+    orderSuccessful: "ஆர்டர் வெற்றி! 🎉",
+    orderCancelled: "ஆர்டர் ரத்து",
+    orderId: "ஆர்டர் ஐடி",
+    total: "மொத்தம்",
+    yourOrderPlaced: "உங்கள் ஆர்டர் வெற்றிகரமாக வைக்கப்பட்டு விரைவில் வழங்கப்படும்.",
+    yourOrderCancelled: "உங்கள் ஆர்டர் வெற்றிகரமாக ரத்து செய்யப்பட்டது.",
+    processingOrder: "உங்கள் ஆர்டர் செயலாக்கப்படுகிறது...",
+    pleaseWait: "தயவுசெய்து காத்திருங்கள்",
+    
+    viewOrders: "ஆர்டர்களை பார்க்க",
+    continueShopping: "ஷாப்பிங் தொடர",
+    backToCart: "வண்டிக்கு திரும்ப",
+    browseMenu: "மெனுவை உலவ",
+    viewMyOrders: "எனது ஆர்டர்களை பார்க்க",
+    apply: "விண்ணப்பிக்க",
+    applied: "விண்ணப்பித்தது",
+    cancel: "ரத்து",
+    placeOrder: "ஆர்டர் செய்",
+    
+    cartEmpty: "உங்கள் வண்டி காலியாக உள்ளது",
+    addItems: "தொடங்க சுவையான பொருட்களை சேர்க்க!",
+    
+    orderItems: "ஆர்டர் பொருட்கள்",
+    specialInstructions: "சிறப்பு அறிவுறுத்தல்கள்",
+    applyCoupon: "கூப்பனை விண்ணப்பிக்க",
+    billSummary: "பில் சுருக்கம்",
+    
+    instructionsPlaceholder: "ஏதேனும் சிறப்பு கோரிக்கைகள் அல்லது உணவு கட்டுப்பாடுகள்...",
+    couponPlaceholder: "கூப்பன் குறியீட்டை உள்ளிடவும்",
+    
+    subtotal: "மொத்தம்",
+    deliveryFee: "விநியோக கட்டணம்",
+    free: "இலவசம்",
+    tax: "வரி (5%)",
+    discount: "தள்ளுபடி (10%)",
+    totalAmount: "மொத்த தொகை",
+    
+    couponApplied: "கூப்பன் \"{code}\" விண்ணப்பித்தது! 10% தள்ளுபடி",
+    invalidCoupon: "தவறான கூப்பன்",
+    enterValidCoupon: "தயவுசெய்து சரியான கூப்பன் குறியீட்டை உள்ளிடவும்",
+    success: "வெற்றி!",
+    discountApplied: "10% தள்ளுபடி விண்ணப்பித்தது! 🎉",
+    
+    addMoreForFreeDelivery: "இலவச விநியோகத்திற்காக ₹{amount} அதிகம் சேர்க்க!",
+    
+    error: "பிழை",
+    orderFailed: "ஆர்டர் தோல்வி",
+    cancelOrder: "ஆர்டரை ரத்து செய்",
+    cancelConfirm: "நீங்கள் இந்த ஆர்டரை ரத்து செய்ய விரும்புகிறீர்களா?",
+    no: "இல்லை",
+    yesCancel: "ஆம், ரத்து செய்",
+    
+    rating: "மதிப்பீடு",
+  },
+
+  gu: {
+    myCart: "મારી કાર્ટ",
+    items: "વસ્તુઓ",
+    item: "વસ્તુ",
+    favorites: "પસંદ",
+    
+    orderSuccessful: "ઓર્ડર સફળ! 🎉",
+    orderCancelled: "ઓર્ડર રદ",
+    orderId: "ઓર્ડર ID",
+    total: "કુલ",
+    yourOrderPlaced: "તમારો ઓર્ડર સફળતાપૂર્વક મૂકવામાં આવ્યો છે અને ટૂંક સમયમાં પહોંચાડવામાં આવશે.",
+    yourOrderCancelled: "તમારો ઓર્ડર સફળતાપૂર્વક રદ કરવામાં આવ્યો છે.",
+    processingOrder: "તમારો ઓર્ડર પ્રોસેસ થઈ રહ્યો છે...",
+    pleaseWait: "કૃપા કરીને રાહ જુઓ",
+    
+    viewOrders: "ઓર્ડર જુઓ",
+    continueShopping: "ખરીદી ચાલુ રાખો",
+    backToCart: "કાર્ટ પર પાછા",
+    browseMenu: "મેનુ બ્રાઉઝ કરો",
+    viewMyOrders: "મારા ઓર્ડર જુઓ",
+    apply: "લાગુ કરો",
+    applied: "લાગુ",
+    cancel: "રદ કરો",
+    placeOrder: "ઓર્ડર મૂકો",
+    
+    cartEmpty: "તમારી કાર્ટ ખાલી છે",
+    addItems: "શરૂ કરવા માટે સ્વાદિષ્ટ વસ્તુઓ ઉમેરો!",
+    
+    orderItems: "ઓર્ડર વસ્તુઓ",
+    specialInstructions: "ખાસ સૂચનાઓ",
+    applyCoupon: "કૂપન લાગુ કરો",
+    billSummary: "બિલ સારાંશ",
+    
+    instructionsPlaceholder: "કોઈપણ ખાસ વિનંતીઓ અથવા આહાર પ્રતિબંધો...",
+    couponPlaceholder: "કૂપન કોડ દાખલ કરો",
+    
+    subtotal: "પેટા-કુલ",
+    deliveryFee: "ડિલિવરી ફી",
+    free: "મફત",
+    tax: "કર (5%)",
+    discount: "ડિસ્કાઉન્ટ (10%)",
+    totalAmount: "કુલ રકમ",
+    
+    couponApplied: "કૂપન \"{code}\" લાગુ! 10% ડિસ્કાઉન્ટ",
+    invalidCoupon: "અમાન્ય કૂપન",
+    enterValidCoupon: "કૃપા કરીને માન્ય કૂપન કોડ દાખલ કરો",
+    success: "સફળતા!",
+    discountApplied: "10% ડિસ્કાઉન્ટ લાગુ! 🎉",
+    
+    addMoreForFreeDelivery: "મફત ડિલિવરી માટે ₹{amount} વધુ ઉમેરો!",
+    
+    error: "ભૂલ",
+    orderFailed: "ઓર્ડર નિષ્ફળ",
+    cancelOrder: "ઓર્ડર રદ કરો",
+    cancelConfirm: "શું તમે ખરેખર આ ઓર્ડર રદ કરવા માંગો છો?",
+    no: "ના",
+    yesCancel: "હા, રદ કરો",
+    
+    rating: "રેટિંગ",
+  },
+};
 
 type CartItem = {
   id: string;
@@ -28,79 +348,108 @@ type CartItem = {
   description?: string;
 };
 
-
-// Orange-Cream Theme Colors
-const COLORS = {
-  primary: "#FF6B35",
-  background: "#FFFCF5",
-  surface: "#FFFFFF",
-  text: "#3E2723",
-  subText: "#8D6E63",
-  border: "#F5E6D3",
-  inputBackground: "#FFFBF7",
-  chipBackground: "#FFF1DC",
-  success: "#4CAF50",
-  warning: "#FF9800",
-  danger: "#F44336",
-  star: "#FFC107",
-  successBg: "#E8F5E9",
-  warningBg: "#FFF3E0",
-  dangerBg: "#FFEBEE",
-};
-
 export default function CartScreen() {
+  const { colors, mode } = useTheme();
   const router = useRouter();
+  
+  // Language state
+  const [languageCode, setLanguageCode] = useState("en");
+
+  // Load saved language from AsyncStorage
+  useEffect(() => {
+    loadLanguage();
+  }, []);
+
+  const loadLanguage = async () => {
+    try {
+      const savedLang = await AsyncStorage.getItem('appLanguage');
+      if (savedLang && translations[savedLang as keyof typeof translations]) {
+        setLanguageCode(savedLang);
+      }
+    } catch (error) {
+      console.log('Error loading language:', error);
+    }
+  };
+
+  // 🔥 Translation function with placeholder support
+  const t = (key: string, params?: Record<string, string | number>) => {
+    const keys = key.split('.');
+    let value: any = translations[languageCode as keyof typeof translations];
+    
+    for (const k of keys) {
+      if (value && value[k] !== undefined) {
+        value = value[k];
+      } else {
+        // Fallback to English
+        let fallback: any = translations.en;
+        for (const fk of keys) {
+          fallback = fallback?.[fk];
+        }
+        value = fallback || key;
+        break;
+      }
+    }
+
+    if (typeof value === 'string' && params) {
+      return value.replace(/{(\w+)}/g, (_, key) => String(params[key] || ''));
+    }
+    
+    return value || key;
+  };
+
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
 
   const { width } = Dimensions.get("window");
-  useEffect(() => {
-  fetchCart();
-}, []);
-
-useFocusEffect(
-  useCallback(() => {
-    fetchCart();
-  }, [])
-);
-
-const fetchCart = async () => {
-  try {
-    const token = await AsyncStorage.getItem("token");
-
-    const { data } = await axios.get(`${BASE_URL}/api/cart`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    if (data && data.items) {
-      const formatted = data.items.map((item: any) => ({
-        id: item.food._id,
-        name: item.food.name,
-        price: item.food.price,
-        qty: item.quantity,
-        category: item.food.category,
-        description: item.food.description,
-      }));
-
-      setCartItems(formatted);
-    } else {
-      setCartItems([]);
-    }
-
-  } catch (error) {
-    console.log("CART FETCH ERROR:", error);
-  }
-};
   
+  useEffect(() => {
+    fetchCart();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchCart();
+    }, [])
+  );
+
+  const fetchCart = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      const { data } = await axios.get(`${BASE_URL}/api/cart`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (data && data.items) {
+        const formatted = data.items.map((item: any) => ({
+          id: item.food._id,
+          name: item.food.name,
+          price: item.food.price,
+          qty: item.quantity,
+          category: item.food.category,
+          description: item.food.description,
+        }));
+
+        setCartItems(formatted);
+      } else {
+        setCartItems([]);
+      }
+
+    } catch (error) {
+      console.log("CART FETCH ERROR:", error);
+    }
+  };
+
   // Order Status States
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderStatus, setOrderStatus] = useState<'success' | 'cancelled' | null>(null);
   const [isProcessingOrder, setIsProcessingOrder] = useState(false);
   const [orderId, setOrderId] = useState("");
+  const [orderTotal, setOrderTotal] = useState(0);
 
   // Calculate totals
   const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
@@ -108,86 +457,83 @@ const fetchCart = async () => {
   const discount = appliedCoupon ? subtotal * 0.1 : 0;
   const tax = subtotal * 0.05;
   const totalAmount = subtotal + deliveryFee + tax - discount;
-const updateQuantity = async (foodId: string, change: number) => {
-  try {
-    const token = await AsyncStorage.getItem("token");
+  
+  const updateQuantity = async (foodId: string, change: number) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
 
-    await axios.post(
-      `${BASE_URL}/api/cart`,
-      {
-        foodId,
-        quantity: change,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+      const action = change === 1 ? "increase" : "decrease";
 
-    fetchCart(); // refresh cart
-  } catch (error) {
-    console.log("UPDATE ERROR:", error);
-  }
-};
+      await axios.put(
+        `${BASE_URL}/api/cart/${foodId}`,
+        { action },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
 
-const placeOrder = async () => {
-  try {
-    setIsProcessingOrder(true);
+      fetchCart();
 
-    const token = await AsyncStorage.getItem("token");
+    } catch (error) {
+      console.log("UPDATE ERROR:", error);
+    }
+  };
 
-    const { data } = await axios.post(
-      `${BASE_URL}/api/orders`,
-      {},
-      {
+  const placeOrder = async () => {
+    try {
+      setIsProcessingOrder(true);
+
+      const token = await AsyncStorage.getItem("token");
+
+      const { data } = await axios.post(
+        `${BASE_URL}/api/orders`,
+        {},
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      setOrderTotal(totalAmount); 
+      setOrderId(data._id);
+      setOrderStatus("success");
+      setShowOrderModal(true);
+      await fetchCart();
+
+    } catch (error) {
+      console.log("ORDER ERROR:", error);
+      Alert.alert(t('error'), t('orderFailed'));
+    } finally {
+      setIsProcessingOrder(false);
+    }
+  };
+
+  const removeItem = async (foodId: string) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      await axios.delete(`${BASE_URL}/api/cart/${foodId}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
-      }
-    );
+      });
 
-    setOrderId(data._id);
-    setOrderStatus("success");
-    setShowOrderModal(true);
-    await fetchCart();
-
-  } catch (error) {
-    console.log("ORDER ERROR:", error);
-    Alert.alert("Error", "Order failed");
-  } finally {
-    setIsProcessingOrder(false);
-  }
-};
-
-const removeItem = async (foodId: string) => {
-  try {
-    const token = await AsyncStorage.getItem("token");
-
-    await axios.post(
-      `${BASE_URL}/api/cart`,
-      {
-        foodId,
-        quantity: -1,
-      },
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
-
-    fetchCart();
-  } catch (error) {
-    console.log(error);
-  }
-};
-
-  
+      fetchCart();
+    } catch (error) {
+      console.log("DELETE ERROR:", error);
+    }
+  };
 
   const applyCoupon = () => {
     if (couponCode.toUpperCase() === "SATTVIK10") {
       setAppliedCoupon("SATTVIK10");
-      Alert.alert("Success!", "10% discount applied! 🎉");
+      Alert.alert(t('success'), t('discountApplied'));
       setCouponCode("");
     } else {
-      Alert.alert("Invalid Coupon", "Please enter a valid coupon code");
+      Alert.alert(t('invalidCoupon'), t('enterValidCoupon'));
     }
   };
 
@@ -195,35 +541,30 @@ const removeItem = async (foodId: string) => {
     const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
     const numbers = "0123456789";
     let id = "SAT";
-    
-    // Add 3 random letters
+
     for (let i = 0; i < 3; i++) {
       id += letters.charAt(Math.floor(Math.random() * letters.length));
     }
-    
-    // Add 4 random numbers
+
     for (let i = 0; i < 4; i++) {
       id += numbers.charAt(Math.floor(Math.random() * numbers.length));
     }
-    
+
     return id;
   };
 
- 
-
   const cancelOrder = () => {
     Alert.alert(
-      "Cancel Order",
-      "Are you sure you want to cancel this order?",
+      t('cancelOrder'),
+      t('cancelConfirm'),
       [
-        { text: "No", style: "cancel" },
-        { 
-          text: "Yes, Cancel", 
+        { text: t('no'), style: "cancel" },
+        {
+          text: t('yesCancel'),
           style: "destructive",
           onPress: () => {
             setIsProcessingOrder(true);
-            
-            // Simulate cancellation process
+
             setTimeout(() => {
               const newOrderId = generateOrderId();
               setOrderId(newOrderId);
@@ -238,85 +579,95 @@ const removeItem = async (foodId: string) => {
   };
 
   const renderCartItem = (item: CartItem, index: number) => (
-    <View key={item.id + index} style={styles.itemCard}>
+    <View key={item.id + index} style={[
+      styles.itemCard, 
+      { 
+        backgroundColor: colors.card,
+        borderColor: colors.border,
+      }
+    ]}>
       <View style={styles.itemLeft}>
         <View style={styles.itemHeader}>
-          <Text style={styles.itemName}>{item.name}</Text>
-          <View style={styles.ratingContainer}>
-            <Ionicons name="star" size={14} color={COLORS.star} />
-            <Text style={styles.ratingText}>4.5</Text>
+          <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
+          <View style={[styles.ratingContainer, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}>
+            <Ionicons name="star" size={14} color="#FFC107" />
+            <Text style={[styles.ratingText, { color: colors.text }]}>4.5</Text>
           </View>
         </View>
-        
+
         {item.description && (
-          <Text style={styles.itemDescription}>{item.description}</Text>
+          <Text style={[styles.itemDescription, { color: colors.subText }]}>{item.description}</Text>
         )}
-        
+
         <View style={styles.itemMeta}>
-          <View style={styles.categoryChip}>
-            <Ionicons name="leaf-outline" size={12} color={COLORS.primary} />
-            <Text style={styles.categoryText}>{item.category}</Text>
+          <View style={[styles.categoryChip, { backgroundColor: colors.primary + '20' }]}>
+            <Ionicons name="leaf-outline" size={12} color={colors.primary} />
+            <Text style={[styles.categoryText, { color: colors.primary }]}>{item.category}</Text>
           </View>
-          <Text style={styles.itemPrice}>₹{item.price}</Text>
+          <Text style={[styles.itemPrice, { color: colors.primary }]}>₹{item.price}</Text>
         </View>
       </View>
 
       <View style={styles.itemRight}>
-        <View style={styles.quantityBox}>
-          <TouchableOpacity 
+        <View style={[styles.quantityBox, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}>
+          <TouchableOpacity
             style={styles.qtyButton}
             onPress={() => updateQuantity(item.id, -1)}
           >
-            <Ionicons name="remove" size={16} color={COLORS.text} />
+            <Ionicons name="remove" size={16} color={colors.text} />
           </TouchableOpacity>
-          
-          <Text style={styles.qtyText}>{item.qty}</Text>
-          
-          <TouchableOpacity 
+
+          <Text style={[styles.qtyText, { color: colors.text }]}>{item.qty}</Text>
+
+          <TouchableOpacity
             style={styles.qtyButton}
             onPress={() => updateQuantity(item.id, 1)}
           >
-            <Ionicons name="add" size={16} color={COLORS.text} />
+            <Ionicons name="add" size={16} color={colors.text} />
           </TouchableOpacity>
         </View>
-        
-        <Text style={styles.itemTotal}>₹{item.price * item.qty}</Text>
-        
-        <TouchableOpacity 
+
+        <Text style={[styles.itemTotal, { color: colors.text }]}>₹{item.price * item.qty}</Text>
+
+        <TouchableOpacity
           style={styles.removeButton}
           onPress={() => removeItem(item.id)}
         >
-          <Ionicons name="trash-outline" size={18} color={COLORS.danger} />
+          <Ionicons name="trash-outline" size={18} color={colors.danger} />
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-     
-      
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header */}
-      <View style={styles.header}>
-        <TouchableOpacity 
-          style={styles.backButton}
+      <View style={[
+        styles.header, 
+        { 
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border 
+        }
+      ]}>
+        <TouchableOpacity
+          style={[styles.backButton, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}
           onPress={() => router.back()}
         >
-          <Ionicons name="arrow-back" size={24} color={COLORS.text} />
+          <Ionicons name="arrow-back" size={24} color={colors.text} />
         </TouchableOpacity>
-        
+
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>My Cart</Text>
-          <Text style={styles.headerSubtitle}>
-            {cartItems.length} item{cartItems.length !== 1 ? 's' : ''}
+          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('myCart')}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.subText }]}>
+            {cartItems.length} {cartItems.length === 1 ? t('item') : t('items')}
           </Text>
         </View>
-        
-        <TouchableOpacity 
-          style={styles.favoriteButton}
-          onPress={() => Alert.alert("Favorites", "View your favorite items")}
+
+        <TouchableOpacity
+          style={[styles.favoriteButton, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}
+          onPress={() => Alert.alert(t('favorites'), t('favorites'))}
         >
-          <Ionicons name="heart-outline" size={24} color={COLORS.primary} />
+          <Ionicons name="heart-outline" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -328,71 +679,87 @@ const removeItem = async (foodId: string) => {
         onRequestClose={() => setShowOrderModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             {orderStatus === 'success' ? (
               <>
-                <View style={[styles.statusIconContainer, { backgroundColor: COLORS.successBg }]}>
-                  <Ionicons name="checkmark-circle" size={80} color={COLORS.success} />
+                <View style={[styles.statusIconContainer, { backgroundColor: colors.success + '20' }]}>
+                  <Ionicons name="checkmark-circle" size={80} color={colors.success} />
                 </View>
-                <Text style={styles.modalTitle}>Order Successful! 🎉</Text>
-                <Text style={styles.modalOrderId}>Order ID: {orderId}</Text>
-                <Text style={styles.modalText}>
-                  Your order has been placed successfully and will be delivered soon.
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{t('orderSuccessful')}</Text>
+                <Text style={[styles.modalOrderId, { 
+                  color: colors.primary,
+                  backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7'
+                }]}>
+                  {t('orderId')}: {orderId}
                 </Text>
-                <Text style={styles.modalAmount}>Total: ₹{totalAmount.toFixed(2)}</Text>
-                
+                <Text style={[styles.modalText, { color: colors.subText }]}>
+                  {t('yourOrderPlaced')}
+                </Text>
+                <Text style={[styles.modalAmount, { color: colors.primary }]}>{t('total')}: ₹{orderTotal.toFixed(2)}</Text>
+
                 <View style={styles.modalButtons}>
-                  <TouchableOpacity 
-                    style={[styles.modalButton, styles.primaryButton]}
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.primaryButton, { backgroundColor: colors.primary }]}
                     onPress={() => {
                       setShowOrderModal(false);
                       router.push('/order');
                     }}
                   >
-                    <Text style={styles.primaryButtonText}>View Orders</Text>
+                    <Text style={styles.primaryButtonText}>{t('viewOrders')}</Text>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.modalButton, styles.secondaryButton]}
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.secondaryButton, { 
+                      backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7',
+                      borderColor: colors.border 
+                    }]}
                     onPress={() => {
                       setShowOrderModal(false);
                       router.push('/');
                     }}
                   >
-                    <Text style={styles.secondaryButtonText}>Continue Shopping</Text>
+                    <Text style={[styles.secondaryButtonText, { color: colors.text }]}>{t('continueShopping')}</Text>
                   </TouchableOpacity>
                 </View>
               </>
             ) : orderStatus === 'cancelled' ? (
               <>
-                <View style={[styles.statusIconContainer, { backgroundColor: COLORS.dangerBg }]}>
-                  <Ionicons name="close-circle" size={80} color={COLORS.danger} />
+                <View style={[styles.statusIconContainer, { backgroundColor: colors.danger + '20' }]}>
+                  <Ionicons name="close-circle" size={80} color={colors.danger} />
                 </View>
-                <Text style={styles.modalTitle}>Order Cancelled</Text>
-                <Text style={styles.modalOrderId}>Order ID: {orderId}</Text>
-                <Text style={styles.modalText}>
-                  Your order has been cancelled successfully.
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{t('orderCancelled')}</Text>
+                <Text style={[styles.modalOrderId, { 
+                  color: colors.primary,
+                  backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7'
+                }]}>
+                  {t('orderId')}: {orderId}
                 </Text>
-                
+                <Text style={[styles.modalText, { color: colors.subText }]}>
+                  {t('yourOrderCancelled')}
+                </Text>
+
                 <View style={styles.modalButtons}>
-                  <TouchableOpacity 
-                    style={[styles.modalButton, styles.primaryButton]}
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.primaryButton, { backgroundColor: colors.primary }]}
                     onPress={() => {
                       setShowOrderModal(false);
                       router.push('/order');
                     }}
                   >
-                    <Text style={styles.primaryButtonText}>View Orders</Text>
+                    <Text style={styles.primaryButtonText}>{t('viewOrders')}</Text>
                   </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    style={[styles.modalButton, styles.secondaryButton]}
+
+                  <TouchableOpacity
+                    style={[styles.modalButton, styles.secondaryButton, { 
+                      backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7',
+                      borderColor: colors.border 
+                    }]}
                     onPress={() => {
                       setShowOrderModal(false);
-                      fetchCart();// Restore cart items
+                      fetchCart();
                     }}
                   >
-                    <Text style={styles.secondaryButtonText}>Back to Cart</Text>
+                    <Text style={[styles.secondaryButtonText, { color: colors.text }]}>{t('backToCart')}</Text>
                   </TouchableOpacity>
                 </View>
               </>
@@ -408,15 +775,15 @@ const removeItem = async (foodId: string) => {
         animationType="fade"
       >
         <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
             <View style={styles.loadingContainer}>
-              <MaterialCommunityIcons 
-                name="food" 
-                size={60} 
-                color={COLORS.primary} 
+              <MaterialCommunityIcons
+                name="food"
+                size={60}
+                color={colors.primary}
               />
-              <Text style={styles.loadingText}>Processing your order...</Text>
-              <Text style={styles.loadingSubtext}>Please wait</Text>
+              <Text style={[styles.loadingText, { color: colors.text }]}>{t('processingOrder')}</Text>
+              <Text style={[styles.loadingSubtext, { color: colors.subText }]}>{t('pleaseWait')}</Text>
             </View>
           </View>
         </View>
@@ -426,71 +793,75 @@ const removeItem = async (foodId: string) => {
         <View style={styles.emptyState}>
           {orderStatus === 'success' ? (
             <>
-              <Ionicons name="checkmark-circle" size={100} color={COLORS.success} />
-              <Text style={styles.emptyStateTitle}>Order Placed Successfully!</Text>
-              <Text style={styles.emptyStateText}>
-                Your order #{orderId} has been confirmed and will be delivered soon.
+              <Ionicons name="checkmark-circle" size={100} color={colors.success} />
+              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>{t('orderSuccessful')}</Text>
+              <Text style={[styles.emptyStateText, { color: colors.subText }]}>
+                {t('yourOrderPlaced')} #{orderId}
               </Text>
             </>
           ) : (
             <>
-              <MaterialCommunityIcons 
-                name="cart-off" 
-                size={100} 
-                color={COLORS.subText} 
+              <MaterialCommunityIcons
+                name="cart-off"
+                size={100}
+                color={colors.subText}
               />
-              <Text style={styles.emptyStateTitle}>Your cart is empty</Text>
-              <Text style={styles.emptyStateText}>
-                Add delicious items to get started!
+              <Text style={[styles.emptyStateTitle, { color: colors.text }]}>{t('cartEmpty')}</Text>
+              <Text style={[styles.emptyStateText, { color: colors.subText }]}>
+                {t('addItems')}
               </Text>
             </>
           )}
-          
-          <TouchableOpacity 
-            style={styles.browseButton}
+
+          <TouchableOpacity
+            style={[styles.browseButton, { backgroundColor: colors.primary }]}
             onPress={() => router.push('/')}
           >
-            <Text style={styles.browseButtonText}>Browse Menu</Text>
+            <Text style={styles.browseButtonText}>{t('browseMenu')}</Text>
           </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={styles.viewOrdersButton}
+
+          <TouchableOpacity
+            style={[styles.viewOrdersButton, { 
+              backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7',
+              borderColor: colors.border 
+            }]}
             onPress={() => router.push('/order')}
           >
-            <Text style={styles.viewOrdersText}>View My Orders</Text>
+            <Text style={[styles.viewOrdersText, { color: colors.text }]}>{t('viewMyOrders')}</Text>
           </TouchableOpacity>
         </View>
       ) : (
         <>
-          <ScrollView 
-  showsVerticalScrollIndicator={false}
-  contentContainerStyle={{
-     paddingHorizontal: 20,
-    paddingBottom: 200,   // 👈 IMPORTANT
-  }}
->
-
-          
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingHorizontal: 20,
+              paddingBottom: 200,
+            }}
+          >
             {/* Cart Items */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Order Items</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('orderItems')}</Text>
               {cartItems.map((item, index) => renderCartItem(item, index))}
             </View>
 
             {/* Special Instructions */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Special Instructions</Text>
-              <View style={styles.inputContainer}>
-                <Ionicons 
-                  name="document-text-outline" 
-                  size={20} 
-                  color={COLORS.subText}
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('specialInstructions')}</Text>
+              <View style={[styles.inputContainer, { 
+                backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7',
+                borderColor: colors.border 
+              }]}>
+                <Ionicons
+                  name="document-text-outline"
+                  size={20}
+                  color={colors.subText}
                   style={styles.inputIcon}
                 />
                 <TextInput
-                  style={styles.instructionsInput}
-                  placeholder="Any special requests or dietary restrictions..."
-                  placeholderTextColor={COLORS.subText}
+                  style={[styles.instructionsInput, { color: colors.text }]}
+                  placeholder={t('instructionsPlaceholder')}
+                  placeholderTextColor={colors.subText}
                   value={specialInstructions}
                   onChangeText={setSpecialInstructions}
                   multiline
@@ -501,42 +872,46 @@ const removeItem = async (foodId: string) => {
 
             {/* Coupon Section */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Apply Coupon</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('applyCoupon')}</Text>
               <View style={styles.couponContainer}>
-                <View style={styles.couponInputContainer}>
-                  <Ionicons 
-                    name="ticket-outline" 
-                    size={20} 
-                    color={COLORS.subText}
+                <View style={[styles.couponInputContainer, { 
+                  backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7',
+                  borderColor: colors.border 
+                }]}>
+                  <Ionicons
+                    name="ticket-outline"
+                    size={20}
+                    color={colors.subText}
                     style={styles.inputIcon}
                   />
                   <TextInput
-                    style={styles.couponInput}
-                    placeholder="Enter coupon code"
-                    placeholderTextColor={COLORS.subText}
+                    style={[styles.couponInput, { color: colors.text }]}
+                    placeholder={t('couponPlaceholder')}
+                    placeholderTextColor={colors.subText}
                     value={couponCode}
                     onChangeText={setCouponCode}
                   />
                 </View>
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={[
                     styles.applyButton,
+                    { backgroundColor: appliedCoupon ? colors.success : colors.primary },
                     appliedCoupon && styles.appliedButton
                   ]}
                   onPress={applyCoupon}
                   disabled={appliedCoupon !== null}
                 >
                   <Text style={styles.applyButtonText}>
-                    {appliedCoupon ? "Applied" : "Apply"}
+                    {appliedCoupon ? t('applied') : t('apply')}
                   </Text>
                 </TouchableOpacity>
               </View>
-              
+
               {appliedCoupon && (
-                <View style={styles.couponApplied}>
-                  <Ionicons name="checkmark-circle" size={16} color={COLORS.success} />
-                  <Text style={styles.couponAppliedText}>
-                    Coupon "{appliedCoupon}" applied! 10% discount
+                <View style={[styles.couponApplied, { backgroundColor: colors.success + '20' }]}>
+                  <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+                  <Text style={[styles.couponAppliedText, { color: colors.success }]}>
+                    {t('couponApplied', { code: appliedCoupon })}
                   </Text>
                 </View>
               )}
@@ -544,48 +919,48 @@ const removeItem = async (foodId: string) => {
 
             {/* Bill Summary */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Bill Summary</Text>
-              
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('billSummary')}</Text>
+
               <View style={styles.billRow}>
-                <Text style={styles.billLabel}>Subtotal</Text>
-                <Text style={styles.billValue}>₹{subtotal}</Text>
+                <Text style={[styles.billLabel, { color: colors.subText }]}>{t('subtotal')}</Text>
+                <Text style={[styles.billValue, { color: colors.text }]}>₹{subtotal}</Text>
               </View>
-              
+
               <View style={styles.billRow}>
-                <Text style={styles.billLabel}>Delivery Fee</Text>
-                <Text style={styles.billValue}>
-                  {deliveryFee === 0 ? "FREE" : `₹${deliveryFee}`}
+                <Text style={[styles.billLabel, { color: colors.subText }]}>{t('deliveryFee')}</Text>
+                <Text style={[styles.billValue, { color: colors.text }]}>
+                  {deliveryFee === 0 ? t('free') : `₹${deliveryFee}`}
                 </Text>
               </View>
-              
+
               <View style={styles.billRow}>
-                <Text style={styles.billLabel}>Tax (5%)</Text>
-                <Text style={styles.billValue}>₹{tax.toFixed(2)}</Text>
+                <Text style={[styles.billLabel, { color: colors.subText }]}>{t('tax')}</Text>
+                <Text style={[styles.billValue, { color: colors.text }]}>₹{tax.toFixed(2)}</Text>
               </View>
-              
+
               {appliedCoupon && (
                 <View style={styles.billRow}>
-                  <Text style={[styles.billLabel, styles.discountLabel]}>
-                    Discount (10%)
+                  <Text style={[styles.billLabel, styles.discountLabel, { color: colors.success }]}>
+                    {t('discount')}
                   </Text>
-                  <Text style={[styles.billValue, styles.discountValue]}>
+                  <Text style={[styles.billValue, styles.discountValue, { color: colors.success }]}>
                     -₹{discount.toFixed(2)}
                   </Text>
                 </View>
               )}
-              
-              <View style={styles.divider} />
-              
+
+              <View style={[styles.divider, { backgroundColor: colors.border }]} />
+
               <View style={styles.totalRow}>
-                <Text style={styles.totalLabel}>Total Amount</Text>
-                <Text style={styles.totalAmount}>₹{totalAmount.toFixed(2)}</Text>
+                <Text style={[styles.totalLabel, { color: colors.text }]}>{t('totalAmount')}</Text>
+                <Text style={[styles.totalAmount, { color: colors.primary }]}>₹{totalAmount.toFixed(2)}</Text>
               </View>
-              
+
               {subtotal < 300 && (
-                <View style={styles.freeDeliveryNote}>
-                  <Ionicons name="information-circle" size={16} color={COLORS.warning} />
-                  <Text style={styles.freeDeliveryText}>
-                    Add ₹{300 - subtotal} more for FREE delivery!
+                <View style={[styles.freeDeliveryNote, { backgroundColor: colors.warning + '20' }]}>
+                  <Ionicons name="information-circle" size={16} color={colors.warning} />
+                  <Text style={[styles.freeDeliveryText, { color: colors.warning }]}>
+                    {t('addMoreForFreeDelivery', { amount: 300 - subtotal })}
                   </Text>
                 </View>
               )}
@@ -593,31 +968,53 @@ const removeItem = async (foodId: string) => {
           </ScrollView>
 
           {/* Footer Buttons */}
-          <View style={styles.footer}>
+          <View style={[styles.footer, { 
+            backgroundColor: colors.card,
+            borderTopColor: colors.border 
+          }]}>
             <View style={styles.actionButtons}>
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.cancelButton]}
+              <TouchableOpacity
+                style={[styles.actionButton, styles.cancelButton, { 
+                  backgroundColor: mode === 'dark' ? colors.background : '#FFF5F5',
+                  borderColor: mode === 'dark' ? colors.danger + '40' : '#FFCDD2'
+                }]}
                 onPress={cancelOrder}
+                activeOpacity={0.8}
               >
-                <Ionicons name="close-circle" size={20} color={COLORS.danger} />
-                <Text style={styles.cancelButtonText}>Cancel Order</Text>
+                <View style={[styles.buttonIconContainer, { backgroundColor: 'rgba(255,255,255,0.2)' }]}>
+                  <Ionicons name="close-outline" size={22} color={colors.danger} />
+                </View>
+                <Text style={[styles.cancelButtonText, { color: colors.danger }]}>{t('cancel')}</Text>
               </TouchableOpacity>
-              
-              <TouchableOpacity 
-                style={[styles.actionButton, styles.placeOrderButton]}
+
+              <TouchableOpacity
+                style={[styles.actionButton, styles.placeOrderButton, { 
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.primary,
+                }]}
                 onPress={placeOrder}
                 disabled={isProcessingOrder}
+                activeOpacity={0.8}
               >
-                <Ionicons name="checkmark-circle" size={20} color="#FFFFFF" />
-                <Text style={styles.placeOrderText}>Place Order • ₹{totalAmount.toFixed(2)}</Text>
+                <View style={styles.buttonIconContainer}>
+                  <Ionicons name="bag-check-outline" size={22} color="#FFFFFF" />
+                </View>
+                <View style={styles.placeOrderTextContainer}>
+                  <Text style={styles.placeOrderLabel}>{t('placeOrder')}</Text>
+                  <Text style={styles.placeOrderAmount}>₹{totalAmount.toFixed(2)}</Text>
+                </View>
               </TouchableOpacity>
             </View>
-            
-            <TouchableOpacity 
-              style={styles.continueButton}
+
+            <TouchableOpacity
+              style={[styles.continueButton, { backgroundColor: colors.primary + '20' }]}
               onPress={() => router.push('/')}
+              activeOpacity={0.7}
             >
-              <Text style={styles.continueText}>Continue Shopping</Text>
+              <View style={styles.continueButtonContent}>
+                <Text style={[styles.continueText, { color: colors.primary }]}>{t('continueShopping')}</Text>
+                <Ionicons name="arrow-forward" size={18} color={colors.primary} />
+              </View>
             </TouchableOpacity>
           </View>
         </>
@@ -629,27 +1026,21 @@ const removeItem = async (foodId: string) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: COLORS.background,
   },
-  
+
   // HEADER
- header: {
-  flexDirection: "row",
-  justifyContent: "space-between",
-  alignItems: "center",
-
-  // ✅ SAME AS TAB HEADER
-  height: 110,
-  paddingTop: 60,
-  paddingBottom: 20,
-  paddingHorizontal: 20,
-
-  borderBottomWidth: 1,
-},
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 40,
+    paddingBottom: 15,
+    paddingHorizontal: 20,
+    borderBottomWidth: 1,
+  },
 
   backButton: {
     padding: 8,
-    backgroundColor: COLORS.inputBackground,
     borderRadius: 12,
   },
   headerCenter: {
@@ -658,19 +1049,16 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 20,
     fontWeight: "600",
-    color: COLORS.text,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: COLORS.subText,
     marginTop: 4,
   },
   favoriteButton: {
     padding: 8,
-    backgroundColor: COLORS.inputBackground,
     borderRadius: 12,
   },
-  
+
   // MODAL STYLES
   modalOverlay: {
     flex: 1,
@@ -680,7 +1068,6 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   modalContent: {
-    backgroundColor: COLORS.surface,
     borderRadius: 20,
     padding: 25,
     width: "100%",
@@ -695,23 +1082,19 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: "700",
-    color: COLORS.text,
     marginBottom: 10,
     textAlign: "center",
   },
   modalOrderId: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.primary,
     marginBottom: 15,
-    backgroundColor: COLORS.inputBackground,
     paddingHorizontal: 15,
     paddingVertical: 8,
     borderRadius: 8,
   },
   modalText: {
     fontSize: 16,
-    color: COLORS.subText,
     textAlign: "center",
     marginBottom: 20,
     lineHeight: 22,
@@ -719,7 +1102,6 @@ const styles = StyleSheet.create({
   modalAmount: {
     fontSize: 20,
     fontWeight: "700",
-    color: COLORS.primary,
     marginBottom: 25,
   },
   modalButtons: {
@@ -732,12 +1114,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   primaryButton: {
-    backgroundColor: COLORS.primary,
+    backgroundColor: "#FF6B35",
   },
   secondaryButton: {
-    backgroundColor: COLORS.inputBackground,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   primaryButtonText: {
     color: "#FFFFFF",
@@ -745,11 +1125,10 @@ const styles = StyleSheet.create({
     fontWeight: "600",
   },
   secondaryButtonText: {
-    color: COLORS.text,
     fontSize: 16,
     fontWeight: "600",
   },
-  
+
   // LOADING MODAL
   loadingContainer: {
     alignItems: "center",
@@ -758,15 +1137,13 @@ const styles = StyleSheet.create({
   loadingText: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.text,
     marginTop: 20,
     marginBottom: 8,
   },
   loadingSubtext: {
     fontSize: 14,
-    color: COLORS.subText,
   },
-  
+
   // EMPTY STATE
   emptyState: {
     flex: 1,
@@ -777,14 +1154,12 @@ const styles = StyleSheet.create({
   emptyStateTitle: {
     fontSize: 22,
     fontWeight: "700",
-    color: COLORS.text,
     marginTop: 20,
     marginBottom: 8,
     textAlign: "center",
   },
   emptyStateText: {
     fontSize: 16,
-    color: COLORS.subText,
     textAlign: "center",
     marginBottom: 30,
     lineHeight: 22,
@@ -793,7 +1168,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: COLORS.primary,
     marginBottom: 15,
   },
   browseButtonText: {
@@ -805,21 +1179,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: COLORS.inputBackground,
     borderWidth: 1,
-    borderColor: COLORS.border,
   },
   viewOrdersText: {
-    color: COLORS.text,
     fontSize: 16,
     fontWeight: "600",
   },
-  
-  // SCROLL CONTENT
-  scrollContent: {
-    paddingBottom: 180,
-  },
-  
+
   // SECTIONS
   section: {
     paddingHorizontal: 20,
@@ -828,21 +1194,18 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.text,
     marginBottom: 15,
   },
-  
+
   // CART ITEM CARD
   itemCard: {
-    width: "100%", 
-    backgroundColor: COLORS.surface,
+    width: "100%",
     borderRadius: 12,
     padding: 16,
     marginBottom: 12,
     flexDirection: "row",
     justifyContent: "space-between",
     borderWidth: 1,
-    borderColor: COLORS.border,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -861,13 +1224,11 @@ const styles = StyleSheet.create({
   itemName: {
     fontSize: 16,
     fontWeight: "600",
-    color: COLORS.text,
     flex: 1,
   },
   ratingContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.inputBackground,
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 4,
@@ -875,12 +1236,10 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.text,
     marginLeft: 4,
   },
   itemDescription: {
     fontSize: 13,
-    color: COLORS.subText,
     marginVertical: 6,
   },
   itemMeta: {
@@ -891,7 +1250,6 @@ const styles = StyleSheet.create({
   categoryChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.chipBackground,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 20,
@@ -899,13 +1257,11 @@ const styles = StyleSheet.create({
   categoryText: {
     fontSize: 12,
     fontWeight: "600",
-    color: COLORS.primary,
     marginLeft: 4,
   },
   itemPrice: {
     fontSize: 16,
     fontWeight: "700",
-    color: COLORS.primary,
   },
   itemRight: {
     alignItems: "center",
@@ -914,7 +1270,6 @@ const styles = StyleSheet.create({
   quantityBox: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: COLORS.inputBackground,
     borderRadius: 20,
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -929,26 +1284,22 @@ const styles = StyleSheet.create({
   qtyText: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.text,
     marginHorizontal: 10,
   },
   itemTotal: {
     fontSize: 15,
     fontWeight: "700",
-    color: COLORS.text,
     marginBottom: 10,
   },
   removeButton: {
     padding: 6,
     borderRadius: 6,
   },
-  
+
   // INPUTS
   inputContainer: {
-    backgroundColor: COLORS.inputBackground,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 12,
     paddingVertical: 12,
     flexDirection: "row",
@@ -961,11 +1312,10 @@ const styles = StyleSheet.create({
   instructionsInput: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.text,
     minHeight: 60,
     textAlignVertical: "top",
   },
-  
+
   // COUPON SECTION
   couponContainer: {
     flexDirection: "row",
@@ -973,10 +1323,8 @@ const styles = StyleSheet.create({
   },
   couponInputContainer: {
     flex: 1,
-    backgroundColor: COLORS.inputBackground,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: COLORS.border,
     paddingHorizontal: 12,
     flexDirection: "row",
     alignItems: "center",
@@ -984,19 +1332,16 @@ const styles = StyleSheet.create({
   couponInput: {
     flex: 1,
     fontSize: 14,
-    color: COLORS.text,
     paddingVertical: 12,
     marginLeft: 8,
   },
   applyButton: {
-    backgroundColor: COLORS.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
     justifyContent: "center",
   },
   appliedButton: {
-    backgroundColor: COLORS.success,
   },
   applyButtonText: {
     color: "#FFFFFF",
@@ -1009,15 +1354,13 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginTop: 12,
-    backgroundColor: COLORS.successBg,
   },
   couponAppliedText: {
     fontSize: 13,
     fontWeight: "500",
-    color: COLORS.success,
     marginLeft: 8,
   },
-  
+
   // BILL SUMMARY
   billRow: {
     flexDirection: "row",
@@ -1027,23 +1370,18 @@ const styles = StyleSheet.create({
   },
   billLabel: {
     fontSize: 14,
-    color: COLORS.subText,
   },
   billValue: {
     fontSize: 14,
-    color: COLORS.text,
     fontWeight: "500",
   },
   discountLabel: {
-    color: COLORS.success,
   },
   discountValue: {
-    color: COLORS.success,
     fontWeight: "600",
   },
   divider: {
     height: 1,
-    backgroundColor: COLORS.border,
     marginVertical: 15,
   },
   totalRow: {
@@ -1054,12 +1392,10 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 18,
     fontWeight: "600",
-    color: COLORS.text,
   },
   totalAmount: {
     fontSize: 22,
     fontWeight: "700",
-    color: COLORS.primary,
   },
   freeDeliveryNote: {
     flexDirection: "row",
@@ -1067,72 +1403,115 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     marginTop: 15,
-    backgroundColor: COLORS.warningBg,
   },
   freeDeliveryText: {
     fontSize: 13,
     fontWeight: "500",
-    color: COLORS.warning,
     marginLeft: 8,
   },
-  
-  // FOOTER WITH ACTION BUTTONS
+
+  // FOOTER
   footer: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: COLORS.surface,
     paddingHorizontal: 20,
-    paddingTop: 15,
+    paddingTop: 12,
     paddingBottom: 30,
     borderTopWidth: 1,
-    borderTopColor: COLORS.border,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: -2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 8,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
   },
+
   actionButtons: {
     flexDirection: "row",
     gap: 10,
-    marginBottom: 12,
+    marginBottom: 10,
   },
+
   actionButton: {
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 16,
-    borderRadius: 12,
-    gap: 8,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 14,
+    gap: 6,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
+
+  buttonIconContainer: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   cancelButton: {
-    backgroundColor: COLORS.inputBackground,
-    borderWidth: 1,
-    borderColor: COLORS.border,
+    borderWidth: 1.5,
   },
+
   placeOrderButton: {
-    backgroundColor: COLORS.primary,
+    borderWidth: 0,
+    elevation: 4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
-  cancelButtonText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: COLORS.danger,
+
+  placeOrderTextContainer: {
+    alignItems: "flex-start",
   },
-  placeOrderText: {
-    fontSize: 16,
-    fontWeight: "700",
+
+  placeOrderLabel: {
+    fontSize: 12,
+    fontWeight: "500",
+    color: "rgba(255,255,255,0.9)",
+    marginBottom: 1,
+  },
+
+  placeOrderAmount: {
+    fontSize: 15,
+    fontWeight: "800",
     color: "#FFFFFF",
+    letterSpacing: 0.5,
   },
+
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: "600",
+    letterSpacing: 0.3,
+  },
+
+  // CONTINUE BUTTON
   continueButton: {
     paddingVertical: 12,
     alignItems: "center",
+    borderRadius: 14,
+    marginTop: 4,
   },
+
+  continueButtonContent: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+
   continueText: {
     fontSize: 14,
     fontWeight: "600",
-    color: COLORS.primary,
+    letterSpacing: 0.3,
   },
 });

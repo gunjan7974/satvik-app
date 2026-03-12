@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { BASE_URL } from "../../config/api";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useFocusEffect } from "@react-navigation/native";
 import {
   View,
   Text,
@@ -15,21 +16,22 @@ import {
   Animated,
   FlatList,
   Alert,
+  BackHandler,
 } from "react-native";
 import type { ListRenderItem } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { useRouter, Tabs } from "expo-router";
+import { useRouter } from "expo-router";
 import { useTheme } from "../data/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.8;
-const SPACING = 20;
 
 // ---------------- TYPES ----------------
 type EventType = {
   _id: string;
   name: string;
   basePrice: number;
+  icon?: string;
 };
 
 type PartyHall = {
@@ -52,18 +54,9 @@ type Service = {
   selected: boolean;
 };
 
-type Testimonial = {
-  id: string;
-  name: string;
-  event: string;
-  review: string;
-  rating: number;
-  date: string;
-};
-
 type BookingForm = {
   eventType: string;
-  date: string;
+  date: Date;
   guests: string;
   name: string;
   email: string;
@@ -75,18 +68,547 @@ type BookingForm = {
   totalCost: number;
 };
 
+// 🔥 TRANSLATIONS FOR 5 LANGUAGES (English, Hindi, Marathi, Tamil, Gujarati)
+const translations = {
+  en: {
+    // Screen
+    loading: "Loading Events...",
+    bookEvent: "Book Your Event",
+    heroDesc: "Ready to plan your special celebration? Let us make it memorable!",
+
+    // Sections
+    chooseEventType: "Choose Event Type",
+    selectEventSub: "Select from our curated event categories",
+    whatWeOffer: "What We Offer",
+    offerSub: "Complete event planning services",
+    readyToBook: "Ready to Book Your Event?",
+    contactSpecialists: "Have questions or ready to get started? Contact our event specialists today!",
+    bookNow: "Book Event Now",
+
+    // Event Types
+    selectThisEvent: "Select This Event",
+    startingFrom: "Starting from",
+
+    // Halls
+    selectPartyHall: "Select Party Hall",
+    chooseVenue: "Choose the perfect venue for your event",
+    capacity: "Capacity",
+    people: "people",
+    perDay: "per day",
+    selectHall: "Select Hall",
+    selected: "Selected",
+
+    // Services
+    additionalServices: "Additional Services",
+    customizeEvent: "Customize your event with our premium services",
+    totalEstimated: "Total Estimated Cost:",
+
+    // Form
+    eventDetails: "Event Details",
+    eventType: "Event Type *",
+    date: "Date *",
+    selectDate: "Select date",
+    guests: "Guests *",
+    guestPlaceholder: "e.g., 50",
+    contactInfo: "Contact Information",
+    fullName: "Full Name *",
+    namePlaceholder: "Enter your name",
+    email: "Email *",
+    emailPlaceholder: "email@example.com",
+    phone: "Phone *",
+    phonePlaceholder: "9876543210",
+    specialRequirements: "Special Requirements",
+    requirementsPlaceholder: "Any special requests or requirements...",
+    budget: "Budget (Optional)",
+    budgetPlaceholder: "e.g., ₹50,000",
+
+    // Review
+    reviewBooking: "Review Your Booking",
+    eventSummary: "Event Summary",
+    eventTypeLabel: "Event Type:",
+    dateLabel: "Date:",
+    guestsLabel: "Guests:",
+    notSpecified: "Not specified",
+    selectedHall: "Selected Hall:",
+    notSelected: "Not selected",
+    servicesLabel: "Services:",
+    none: "None",
+    totalCost: "Total Cost:",
+    contactLabel: "Contact:",
+    emailLabel: "Email:",
+    phoneLabel: "Phone:",
+    toBeDecided: "To be decided",
+    note: "Our team will contact you within 24 hours to confirm details.",
+
+    // Steps
+    stepEvent: "Event",
+    stepHall: "Hall",
+    stepContact: "Contact",
+    stepReview: "Review",
+
+    // Buttons
+    back: "Back",
+    next: "Next",
+    submit: "Submit",
+    close: "Close",
+
+    // Alerts
+    error: "Error",
+    success: "Success",
+    pleaseLogin: "Please login first",
+    bookingFailed: "Booking failed",
+    bookingSuccess: "Booking Created Successfully!",
+    somethingWentWrong: "Something went wrong",
+    selectEventFirst: "Please select an event type",
+    selectHallFirst: "Please select a party hall",
+    fillContactInfo: "Please fill all required contact information",
+
+    // Months
+    january: "January",
+    february: "February",
+    march: "March",
+    april: "April",
+    may: "May",
+    june: "June",
+    july: "July",
+    august: "August",
+    september: "September",
+    october: "October",
+    november: "November",
+    december: "December",
+  },
+
+  hi: {
+    loading: "इवेंट लोड हो रहे हैं...",
+    bookEvent: "अपना इवेंट बुक करें",
+    heroDesc: "अपने विशेष उत्सव की योजना बनाने के लिए तैयार हैं? इसे यादगार बनाएं!",
+    chooseEventType: "इवेंट प्रकार चुनें",
+    selectEventSub: "हमारी चयनित इवेंट श्रेणियों में से चुनें",
+    whatWeOffer: "हम क्या प्रदान करते हैं",
+    offerSub: "संपूर्ण इवेंट प्लानिंग सेवाएं",
+    readyToBook: "अपना इवेंट बुक करने के लिए तैयार हैं?",
+    contactSpecialists: "सवाल हैं या शुरू करने के लिए तैयार हैं? आज ही हमारे इवेंट विशेषज्ञों से संपर्क करें!",
+    bookNow: "अभी इवेंट बुक करें",
+    selectThisEvent: "यह इवेंट चुनें",
+    startingFrom: "शुरुआती कीमत",
+    selectPartyHall: "पार्टी हॉल चुनें",
+    chooseVenue: "अपने इवेंट के लिए सही स्थान चुनें",
+    capacity: "क्षमता",
+    people: "लोग",
+    perDay: "प्रति दिन",
+    selectHall: "हॉल चुनें",
+    selected: "चयनित",
+    additionalServices: "अतिरिक्त सेवाएं",
+    customizeEvent: "हमारी प्रीमियम सेवाओं के साथ अपने इवेंट को कस्टमाइज़ करें",
+    totalEstimated: "अनुमानित कुल लागत:",
+    eventDetails: "इवेंट विवरण",
+    eventType: "इवेंट प्रकार *",
+    date: "तारीख *",
+    selectDate: "तारीख चुनें",
+    guests: "मेहमान *",
+    guestPlaceholder: "जैसे, 50",
+    contactInfo: "संपर्क जानकारी",
+    fullName: "पूरा नाम *",
+    namePlaceholder: "अपना नाम दर्ज करें",
+    email: "ईमेल *",
+    emailPlaceholder: "email@example.com",
+    phone: "फोन *",
+    phonePlaceholder: "9876543210",
+    specialRequirements: "विशेष आवश्यकताएं",
+    requirementsPlaceholder: "कोई विशेष अनुरोध या आवश्यकताएं...",
+    budget: "बजट (वैकल्पिक)",
+    budgetPlaceholder: "जैसे, ₹50,000",
+    reviewBooking: "अपनी बुकिंग की समीक्षा करें",
+    eventSummary: "इवेंट सारांश",
+    eventTypeLabel: "इवेंट प्रकार:",
+    dateLabel: "तारीख:",
+    guestsLabel: "मेहमान:",
+    notSpecified: "निर्दिष्ट नहीं",
+    selectedHall: "चयनित हॉल:",
+    notSelected: "चयनित नहीं",
+    servicesLabel: "सेवाएं:",
+    none: "कोई नहीं",
+    totalCost: "कुल लागत:",
+    contactLabel: "संपर्क:",
+    emailLabel: "ईमेल:",
+    phoneLabel: "फोन:",
+    toBeDecided: "तय होना बाकी",
+    note: "हमारी टीम पुष्टि के लिए 24 घंटे के भीतर आपसे संपर्क करेगी।",
+    stepEvent: "इवेंट",
+    stepHall: "हॉल",
+    stepContact: "संपर्क",
+    stepReview: "समीक्षा",
+    back: "वापस",
+    next: "अगला",
+    submit: "जमा करें",
+    close: "बंद करें",
+    error: "त्रुटि",
+    success: "सफलता",
+    pleaseLogin: "कृपया पहले लॉगिन करें",
+    bookingFailed: "बुकिंग विफल",
+    bookingSuccess: "बुकिंग सफलतापूर्वक बनाई गई!",
+    somethingWentWrong: "कुछ गलत हो गया",
+    selectEventFirst: "कृपया एक इवेंट प्रकार चुनें",
+    selectHallFirst: "कृपया एक पार्टी हॉल चुनें",
+    fillContactInfo: "कृपया सभी आवश्यक संपर्क जानकारी भरें",
+    january: "जनवरी",
+    february: "फरवरी",
+    march: "मार्च",
+    april: "अप्रैल",
+    may: "मई",
+    june: "जून",
+    july: "जुलाई",
+    august: "अगस्त",
+    september: "सितंबर",
+    october: "अक्टूबर",
+    november: "नवंबर",
+    december: "दिसंबर",
+  },
+
+  mr: {
+    loading: "इव्हेंट लोड होत आहेत...",
+    bookEvent: "तुमचा इव्हेंट बुक करा",
+    heroDesc: "तुमच्या खास उत्सवाची योजना करण्यासाठी सज्ज आहात? तो संस्मरणीय बनवा!",
+    chooseEventType: "इव्हेंट प्रकार निवडा",
+    selectEventSub: "आमच्या क्युरेटेड इव्हेंट श्रेणींमधून निवडा",
+    whatWeOffer: "आम्ही काय ऑफर करतो",
+    offerSub: "संपूर्ण इव्हेंट प्लॅनिंग सेवा",
+    readyToBook: "तुमचा इव्हेंट बुक करण्यासाठी सज्ज आहात?",
+    contactSpecialists: "प्रश्न आहेत किंवा सुरू करण्यासाठी सज्ज आहात? आजच आमच्या इव्हेंट तज्ञांशी संपर्क साधा!",
+    bookNow: "आताच इव्हेंट बुक करा",
+    selectThisEvent: "हा इव्हेंट निवडा",
+    startingFrom: "सुरुवातीची किंमत",
+    selectPartyHall: "पार्टी हॉल निवडा",
+    chooseVenue: "तुमच्या इव्हेंटसाठी योग्य स्थान निवडा",
+    capacity: "क्षमता",
+    people: "लोक",
+    perDay: "प्रतिदिन",
+    selectHall: "हॉल निवडा",
+    selected: "निवडले",
+    additionalServices: "अतिरिक्त सेवा",
+    customizeEvent: "आमच्या प्रीमियम सेवांसह तुमचा इव्हेंट सानुकूलित करा",
+    totalEstimated: "एकूण अंदाजित खर्च:",
+    eventDetails: "इव्हेंट तपशील",
+    eventType: "इव्हेंट प्रकार *",
+    date: "तारीख *",
+    selectDate: "तारीख निवडा",
+    guests: "पाहुणे *",
+    guestPlaceholder: "उदा., ५०",
+    contactInfo: "संपर्क माहिती",
+    fullName: "पूर्ण नाव *",
+    namePlaceholder: "तुमचे नाव प्रविष्ट करा",
+    email: "ईमेल *",
+    emailPlaceholder: "email@example.com",
+    phone: "फोन *",
+    phonePlaceholder: "९८७६५४३२१०",
+    specialRequirements: "विशेष आवश्यकता",
+    requirementsPlaceholder: "कोणत्याही विशेष विनंत्या किंवा आवश्यकता...",
+    budget: "बजेट (पर्यायी)",
+    budgetPlaceholder: "उदा., ₹५०,०००",
+    reviewBooking: "तुमच्या बुकिंगचे पुनरावलोकन करा",
+    eventSummary: "इव्हेंट सारांश",
+    eventTypeLabel: "इव्हेंट प्रकार:",
+    dateLabel: "तारीख:",
+    guestsLabel: "पाहुणे:",
+    notSpecified: "निर्दिष्ट नाही",
+    selectedHall: "निवडलेला हॉल:",
+    notSelected: "निवडला नाही",
+    servicesLabel: "सेवा:",
+    none: "कोणतीही नाही",
+    totalCost: "एकूण खर्च:",
+    contactLabel: "संपर्क:",
+    emailLabel: "ईमेल:",
+    phoneLabel: "फोन:",
+    toBeDecided: "ठरवायचे आहे",
+    note: "आमची टीम पुष्टीसाठी २४ तासांच्या आत तुमच्याशी संपर्क साधेल.",
+    stepEvent: "इव्हेंट",
+    stepHall: "हॉल",
+    stepContact: "संपर्क",
+    stepReview: "पुनरावलोकन",
+    back: "मागे",
+    next: "पुढे",
+    submit: "सबमिट करा",
+    close: "बंद करा",
+    error: "त्रुटी",
+    success: "यश",
+    pleaseLogin: "कृपया प्रथम लॉगिन करा",
+    bookingFailed: "बुकिंग अयशस्वी",
+    bookingSuccess: "बुकिंग यशस्वीरित्या तयार केले!",
+    somethingWentWrong: "काहीतरी चूक झाली",
+    selectEventFirst: "कृपया एक इव्हेंट प्रकार निवडा",
+    selectHallFirst: "कृपया एक पार्टी हॉल निवडा",
+    fillContactInfo: "कृपया सर्व आवश्यक संपर्क माहिती भरा",
+    january: "जानेवारी",
+    february: "फेब्रुवारी",
+    march: "मार्च",
+    april: "एप्रिल",
+    may: "मे",
+    june: "जून",
+    july: "जुलै",
+    august: "ऑगस्ट",
+    september: "सप्टेंबर",
+    october: "ऑक्टोबर",
+    november: "नोव्हेंबर",
+    december: "डिसेंबर",
+  },
+
+  ta: {
+    loading: "நிகழ்வுகள் ஏற்றப்படுகின்றன...",
+    bookEvent: "உங்கள் நிகழ்வை பதிவு செய்யுங்கள்",
+    heroDesc: "உங்கள் சிறப்பு கொண்டாட்டத்தை திட்டமிட தயாரா? அதை மறக்க முடியாததாக மாற்றுங்கள்!",
+    chooseEventType: "நிகழ்வு வகையை தேர்வு செய்யவும்",
+    selectEventSub: "எங்கள் தேர்ந்தெடுக்கப்பட்ட நிகழ்வு வகைகளிலிருந்து தேர்வு செய்யவும்",
+    whatWeOffer: "நாங்கள் வழங்குவது",
+    offerSub: "முழுமையான நிகழ்வு திட்டமிடல் சேவைகள்",
+    readyToBook: "உங்கள் நிகழ்வை பதிவு செய்ய தயாரா?",
+    contactSpecialists: "கேள்விகள் உள்ளதா அல்லது தொடங்க தயாரா? இன்றே எங்கள் நிகழ்வு நிபுணர்களை தொடர்பு கொள்ளுங்கள்!",
+    bookNow: "இப்போதே நிகழ்வை பதிவு செய்யுங்கள்",
+    selectThisEvent: "இந்த நிகழ்வை தேர்வு செய்யவும்",
+    startingFrom: "தொடக்க விலை",
+    selectPartyHall: "பார்ட்டி ஹால் தேர்வு செய்யவும்",
+    chooseVenue: "உங்கள் நிகழ்வுக்கான சரியான இடத்தை தேர்வு செய்யவும்",
+    capacity: "கொள்ளளவு",
+    people: "மக்கள்",
+    perDay: "ஒரு நாளைக்கு",
+    selectHall: "ஹால் தேர்வு",
+    selected: "தேர்வு செய்யப்பட்டது",
+    additionalServices: "கூடுதல் சேவைகள்",
+    customizeEvent: "எங்கள் பிரீமியம் சேவைகளுடன் உங்கள் நிகழ்வை தனிப்பயனாக்குங்கள்",
+    totalEstimated: "மொத்த மதிப்பீட்டு செலவு:",
+    eventDetails: "நிகழ்வு விவரங்கள்",
+    eventType: "நிகழ்வு வகை *",
+    date: "தேதி *",
+    selectDate: "தேதியை தேர்வு செய்யவும்",
+    guests: "விருந்தினர்கள் *",
+    guestPlaceholder: "எ.கா., 50",
+    contactInfo: "தொடர்பு தகவல்",
+    fullName: "முழு பெயர் *",
+    namePlaceholder: "உங்கள் பெயரை உள்ளிடவும்",
+    email: "மின்னஞ்சல் *",
+    emailPlaceholder: "email@example.com",
+    phone: "தொலைபேசி *",
+    phonePlaceholder: "9876543210",
+    specialRequirements: "சிறப்பு தேவைகள்",
+    requirementsPlaceholder: "ஏதேனும் சிறப்பு கோரிக்கைகள் அல்லது தேவைகள்...",
+    budget: "பட்ஜெட் (விருப்ப)",
+    budgetPlaceholder: "எ.கா., ₹50,000",
+    reviewBooking: "உங்கள் பதிவை மதிப்பாய்வு செய்யுங்கள்",
+    eventSummary: "நிகழ்வு சுருக்கம்",
+    eventTypeLabel: "நிகழ்வு வகை:",
+    dateLabel: "தேதி:",
+    guestsLabel: "விருந்தினர்கள்:",
+    notSpecified: "குறிப்பிடப்படவில்லை",
+    selectedHall: "தேர்ந்தெடுக்கப்பட்ட ஹால்:",
+    notSelected: "தேர்ந்தெடுக்கப்படவில்லை",
+    servicesLabel: "சேவைகள்:",
+    none: "எதுவுமில்லை",
+    totalCost: "மொத்த செலவு:",
+    contactLabel: "தொடர்பு:",
+    emailLabel: "மின்னஞ்சல்:",
+    phoneLabel: "தொலைபேசி:",
+    toBeDecided: "முடிவு செய்யப்பட வேண்டும்",
+    note: "எங்கள் குழு உறுதிப்படுத்த 24 மணி நேரத்திற்குள் உங்களை தொடர்பு கொள்ளும்.",
+    stepEvent: "நிகழ்வு",
+    stepHall: "ஹால்",
+    stepContact: "தொடர்பு",
+    stepReview: "மதிப்பாய்வு",
+    back: "பின்செல்",
+    next: "அடுத்து",
+    submit: "சமர்ப்பி",
+    close: "மூடு",
+    error: "பிழை",
+    success: "வெற்றி",
+    pleaseLogin: "முதலில் உள்நுழையவும்",
+    bookingFailed: "பதிவு தோல்வியடைந்தது",
+    bookingSuccess: "பதிவு வெற்றிகரமாக உருவாக்கப்பட்டது!",
+    somethingWentWrong: "ஏதோ தவறு நடந்துள்ளது",
+    selectEventFirst: "தயவுசெய்து ஒரு நிகழ்வு வகையை தேர்வு செய்யவும்",
+    selectHallFirst: "தயவுசெய்து ஒரு பார்ட்டி ஹாலை தேர்வு செய்யவும்",
+    fillContactInfo: "தயவுசெய்து அனைத்து தேவையான தொடர்பு தகவல்களையும் பூர்த்தி செய்யவும்",
+    january: "ஜனவரி",
+    february: "பிப்ரவரி",
+    march: "மார்ச்",
+    april: "ஏப்ரல்",
+    may: "மே",
+    june: "ஜூன்",
+    july: "ஜூலை",
+    august: "ஆகஸ்ட்",
+    september: "செப்டம்பர்",
+    october: "அக்டோபர்",
+    november: "நவம்பர்",
+    december: "டிசம்பர்",
+  },
+
+  gu: {
+    loading: "ઇવેન્ટ્સ લોડ થઈ રહ્યા છે...",
+    bookEvent: "તમારો ઇવેન્ટ બુક કરો",
+    heroDesc: "તમારી ખાસ ઉજવણીનું આયોજન કરવા તૈયાર છો? તેને યાદગાર બનાવો!",
+    chooseEventType: "ઇવેન્ટ પ્રકાર પસંદ કરો",
+    selectEventSub: "અમારી ક્યુરેટેડ ઇવેન્ટ શ્રેણીઓમાંથી પસંદ કરો",
+    whatWeOffer: "અમે શું ઓફર કરીએ છીએ",
+    offerSub: "સંપૂર્ણ ઇવેન્ટ પ્લાનિંગ સેવાઓ",
+    readyToBook: "તમારો ઇવેન્ટ બુક કરવા તૈયાર છો?",
+    contactSpecialists: "પ્રશ્નો છે અથવા શરૂ કરવા તૈયાર છો? આજે જ અમારા ઇવેન્ટ નિષ્ણાતોનો સંપર્ક કરો!",
+    bookNow: "હમણાં ઇવેન્ટ બુક કરો",
+    selectThisEvent: "આ ઇવેન્ટ પસંદ કરો",
+    startingFrom: "શરૂઆતની કિંમત",
+    selectPartyHall: "પાર્ટી હોલ પસંદ કરો",
+    chooseVenue: "તમારા ઇવેન્ટ માટે યોગ્ય સ્થળ પસંદ કરો",
+    capacity: "ક્ષમતા",
+    people: "લોકો",
+    perDay: "પ્રતિ દિવસ",
+    selectHall: "હોલ પસંદ કરો",
+    selected: "પસંદ થયેલ",
+    additionalServices: "વધારાની સેવાઓ",
+    customizeEvent: "અમારી પ્રીમિયમ સેવાઓ સાથે તમારા ઇવેન્ટને કસ્ટમાઇઝ કરો",
+    totalEstimated: "કુલ અંદાજિત ખર્ચ:",
+    eventDetails: "ઇવેન્ટ વિગતો",
+    eventType: "ઇવેન્ટ પ્રકાર *",
+    date: "તારીખ *",
+    selectDate: "તારીખ પસંદ કરો",
+    guests: "મહેમાનો *",
+    guestPlaceholder: "દા.ત., ૫૦",
+    contactInfo: "સંપર્ક માહિતી",
+    fullName: "પૂરું નામ *",
+    namePlaceholder: "તમારું નામ દાખલ કરો",
+    email: "ઇમેઇલ *",
+    emailPlaceholder: "email@example.com",
+    phone: "ફોન *",
+    phonePlaceholder: "૯૮૭૬૫૪૩૨૧૦",
+    specialRequirements: "ખાસ જરૂરિયાતો",
+    requirementsPlaceholder: "કોઈ ખાસ વિનંતીઓ અથવા જરૂરિયાતો...",
+    budget: "બજેટ (વૈકલ્પિક)",
+    budgetPlaceholder: "દા.ત., ₹૫૦,૦૦૦",
+    reviewBooking: "તમારી બુકિંગની સમીક્ષા કરો",
+    eventSummary: "ઇવેન્ટ સારાંશ",
+    eventTypeLabel: "ઇવેન્ટ પ્રકાર:",
+    dateLabel: "તારીખ:",
+    guestsLabel: "મહેમાનો:",
+    notSpecified: "સ્પષ્ટ થયેલ નથી",
+    selectedHall: "પસંદ થયેલ હોલ:",
+    notSelected: "પસંદ થયેલ નથી",
+    servicesLabel: "સેવાઓ:",
+    none: "કોઈ નહીં",
+    totalCost: "કુલ ખર્ચ:",
+    contactLabel: "સંપર્ક:",
+    emailLabel: "ઇમેઇલ:",
+    phoneLabel: "ફોન:",
+    toBeDecided: "નક્કી કરવાનું બાકી",
+    note: "અમારી ટીમ પુષ્ટિ માટે ૨૪ કલાકની અંદર તમારો સંપર્ક કરશે.",
+    stepEvent: "ઇવેન્ટ",
+    stepHall: "હોલ",
+    stepContact: "સંપર્ક",
+    stepReview: "સમીક્ષા",
+    back: "પાછળ",
+    next: "આગળ",
+    submit: "સબમિટ કરો",
+    close: "બંધ કરો",
+    error: "ભૂલ",
+    success: "સફળતા",
+    pleaseLogin: "કૃપા કરીને પ્રથમ લૉગિન કરો",
+    bookingFailed: "બુકિંગ નિષ્ફળ",
+    bookingSuccess: "બુકિંગ સફળતાપૂર્વક બનાવાયું!",
+    somethingWentWrong: "કંઈક ખોટું થયું",
+    selectEventFirst: "કૃપા કરીને ઇવેન્ટ પ્રકાર પસંદ કરો",
+    selectHallFirst: "કૃપા કરીને પાર્ટી હોલ પસંદ કરો",
+    fillContactInfo: "કૃપા કરીને બધી જરૂરી સંપર્ક માહિતી ભરો",
+    january: "જાન્યુઆરી",
+    february: "ફેબ્રુઆરી",
+    march: "માર્ચ",
+    april: "એપ્રિલ",
+    may: "મે",
+    june: "જૂન",
+    july: "જુલાઈ",
+    august: "ઓગસ્ટ",
+    september: "સપ્ટેમ્બર",
+    october: "ઓક્ટોબર",
+    november: "નવેમ્બર",
+    december: "ડિસેમ્બર",
+  },
+};
+
+// Sample service data
+const SERVICE_DATA = [
+  {
+    id: "1",
+    title: "Customized Menu Planning",
+    description: "Tailored food and beverage options",
+    icon: "🍽️",
+    price: 5000
+  },
+  {
+    id: "2",
+    title: "Professional Decorations",
+    description: "Theme-based decoration and setup",
+    icon: "🎨",
+    price: 8000
+  },
+  {
+    id: "3",
+    title: "Dedicated Event Manager",
+    description: "Personal coordinator for seamless execution",
+    icon: "👨‍💼",
+    price: 10000
+  },
+  {
+    id: "4",
+    title: "Photography Services",
+    description: "Professional photography and videography",
+    icon: "📸",
+    price: 12000
+  },
+  {
+    id: "5",
+    title: "Special Group Pricing",
+    description: "Exclusive discounts for group bookings",
+    icon: "💰",
+    price: 3000
+  },
+  {
+    id: "6",
+    title: "Entertainment Setup",
+    description: "Music, DJ, and entertainment arrangements",
+    icon: "🎵",
+    price: 15000
+  },
+];
+
 export default function EventsBookingScreen() {
   const router = useRouter();
-  const servicesAnim = useRef(
-    Array.from({ length: 6 }, () => new Animated.Value(0))
-  ).current;
   const { colors, mode } = useTheme();
+
+  // Language state
+  const [languageCode, setLanguageCode] = useState("en");
+
+  // Load saved language from AsyncStorage
+  useFocusEffect(
+    React.useCallback(() => {
+      loadLanguage();
+    }, [])
+  );
+
+  const loadLanguage = async () => {
+    try {
+      const savedLang = await AsyncStorage.getItem('appLanguage');
+      if (savedLang) {
+        setLanguageCode(savedLang);
+      }
+    } catch (error) {
+      console.log('Error loading language:', error);
+    }
+  };
+
+  // 🔥 Translation function
+  const t = (key: keyof typeof translations.en) => {
+    return translations[languageCode]?.[key] || translations.en[key];
+  };
+
+  const [showBookingForm, setShowBookingForm] = useState(false);
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [selectedEventType, setSelectedEventType] = useState<EventType | null>(null);
-  const [showBookingForm, setShowBookingForm] = useState<boolean>(false);
   const [bookingForm, setBookingForm] = useState<BookingForm>({
     eventType: "",
-    date: "",
+    date: new Date(),
     guests: "",
     name: "",
     email: "",
@@ -100,73 +622,177 @@ export default function EventsBookingScreen() {
 
   const [activeStep, setActiveStep] = useState<number>(1);
   const scrollX = useRef(new Animated.Value(0)).current;
-
   const flatListRef = useRef<FlatList<EventType>>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const testimonialRef = useRef<FlatList>(null);
-  const [testimonialIndex, setTestimonialIndex] = useState(0);
 
+  // 🔥 SCROLL ANIMATION VALUES
+  const scrollY = useRef(new Animated.Value(0)).current;
 
+  // Hero section animations
+  const heroOpacity = scrollY.interpolate({
+    inputRange: [0, 100, 200],
+    outputRange: [1, 0.8, 0.6],
+    extrapolate: 'clamp',
+  });
+
+  const heroScale = scrollY.interpolate({
+    inputRange: [0, 100],
+    outputRange: [1, 0.95],
+    extrapolate: 'clamp',
+  });
+
+  // Section 1 animations (Event Types)
+  const section1Opacity = scrollY.interpolate({
+    inputRange: [0, 150, 300],
+    outputRange: [1, 1, 0.8],
+    extrapolate: 'clamp',
+  });
+
+  const section1TranslateY = scrollY.interpolate({
+    inputRange: [0, 150, 300],
+    outputRange: [0, 0, -20],
+    extrapolate: 'clamp',
+  });
+
+  // Section 2 animations (What We Offer)
+  const section2Opacity = scrollY.interpolate({
+    inputRange: [200, 350, 500],
+    outputRange: [0.6, 1, 0.8],
+    extrapolate: 'clamp',
+  });
+
+  const section2TranslateY = scrollY.interpolate({
+    inputRange: [200, 350, 500],
+    outputRange: [30, 0, -20],
+    extrapolate: 'clamp',
+  });
+
+  // CTA animations
+  const ctaOpacity = scrollY.interpolate({
+    inputRange: [700, 850, 1000],
+    outputRange: [0.6, 1, 1],
+    extrapolate: 'clamp',
+  });
+
+  const ctaScale = scrollY.interpolate({
+    inputRange: [700, 850],
+    outputRange: [0.9, 1],
+    extrapolate: 'clamp',
+  });
+
+  // Entrance animations
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(50)).current;
+  const scaleAnim = useRef(new Animated.Value(0.95)).current;
+  const headerAnim = useRef(new Animated.Value(0)).current;
+
+  // Card entrance animations array
+  const [cardAnims] = useState(() => SERVICE_DATA.map(() => new Animated.Value(0)));
+
+  useEffect(() => {
+    const backAction = () => {
+      if (showBookingForm) {
+        setShowBookingForm(false);
+        return true;
+      }
+      router.replace("/");
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, [showBookingForm, router]);
+
+  // ---------------- DATA ----------------
+  const [eventTypes, setEventTypes] = useState<any[]>([]);
+  const [partyHalls, setPartyHalls] = useState<any[]>([]);
+  const [allServices, setAllServices] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      const startTime = Date.now();
+
+      await Promise.all([
+        fetchEventTypes(),
+        fetchHalls(),
+        fetchServices(),
+      ]);
+
+      const endTime = Date.now();
+      const diff = endTime - startTime;
+      const minimumLoadingTime = 1200;
+
+      if (diff < minimumLoadingTime) {
+        await new Promise(resolve => setTimeout(resolve, minimumLoadingTime - diff));
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
+  }, []);
+
+  // 🔥 ENTRANCE ANIMATION
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 7,
+        useNativeDriver: true,
+      }),
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    Animated.stagger(
+      150,
+      cardAnims.map(anim =>
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        })
+      )
+    ).start();
+  }, []);
+
+  // 🔥 AUTO SLIDE FOR EVENT TYPES
   useEffect(() => {
     if (eventTypes.length === 0) return;
 
     const autoScroll = setInterval(() => {
       setCurrentIndex((prevIndex) => {
-        const nextIndex =
-          prevIndex + 1 >= eventTypes.length ? 0 : prevIndex + 1;
-
+        const nextIndex = prevIndex + 1 >= eventTypes.length ? 0 : prevIndex + 1;
         flatListRef.current?.scrollToOffset({
           offset: nextIndex * CARD_WIDTH,
           animated: true,
         });
-
         return nextIndex;
       });
-    }, 2500); // speed
+    }, 2500);
 
     return () => clearInterval(autoScroll);
   }, [eventTypes]);
-
-  const stopAutoScroll = () => {
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-      intervalRef.current = null;
-    }
-  };
-
-  const startAutoScroll = () => {
-    if (intervalRef.current) return;
-
-    intervalRef.current = setInterval(() => {
-      setCurrentIndex((prev) => {
-        const next =
-          prev + 1 >= eventTypes.length ? 0 : prev + 1;
-
-        flatListRef.current?.scrollToOffset({
-          offset: next * CARD_WIDTH,
-          animated: true,
-        });
-
-        return next;
-      });
-    }, 2500);
-  };
-
-  const handleScroll = (event: any) => {
-    const scrollPosition = event.nativeEvent.contentOffset.x;
-    const index = Math.round(scrollPosition / CARD_WIDTH);
-    if (index !== currentIndex) {
-      setCurrentIndex(index);
-    }
-  };
-
-  // ---------------- DATA ----------------
-  const [eventTypes, setEventTypes] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchEventTypes();
-  }, []);
 
   const fetchEventTypes = async () => {
     try {
@@ -178,12 +804,6 @@ export default function EventsBookingScreen() {
     }
   };
 
-  const [partyHalls, setPartyHalls] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchHalls();
-  }, []);
-
   const fetchHalls = async () => {
     try {
       const response = await fetch(`${BASE_URL}/api/events/halls`);
@@ -194,98 +814,32 @@ export default function EventsBookingScreen() {
     }
   };
 
-  const [allServices, setAllServices] = useState<any[]>([]);
-
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  useEffect(() => {
-    const animations = servicesAnim.map((anim, index) =>
-      Animated.timing(anim, {
-        toValue: 1,
-        duration: 600,
-        delay: index * 150,
-        useNativeDriver: true,
-      })
-    );
-
-    Animated.stagger(150, animations).start();
-  }, []);
-
   const fetchServices = async () => {
     try {
       const response = await fetch(`${BASE_URL}/api/events/services`);
       const data = await response.json();
-
       const formatted = data.map((item: any) => ({
         ...item,
         selected: false,
       }));
-
       setAllServices(formatted);
     } catch (error) {
       console.log("Error fetching services:", error);
     }
   };
 
-  const testimonials: Testimonial[] = [
-    {
-      id: "1",
-      name: "Amit Sharma",
-      event: "Birthday Party",
-      review: "Excellent service! The decorations were amazing and food was delicious.",
-      rating: 5,
-      date: "15 Dec 2024",
-    },
-    {
-      id: "2",
-      name: "Priya Verma",
-      event: "Corporate Event",
-      review: "Professional team, great food quality, perfect for our annual meet.",
-      rating: 5,
-      date: "10 Dec 2024",
-    },
-    {
-      id: "3",
-      name: "Rahul Jain",
-      event: "Anniversary",
-      review: "Made our 25th anniversary truly special. Highly recommended!",
-      rating: 5,
-      date: "5 Dec 2024",
-    },
-  ];
-
-  useEffect(() => {
-    if (testimonials.length === 0) return;
-
-    const interval = setInterval(() => {
-      setTestimonialIndex((prev) => {
-        const next =
-          prev + 1 >= testimonials.length ? 0 : prev + 1;
-
-        testimonialRef.current?.scrollToIndex({
-          index: next,
-          animated: true,
-        });
-
-        return next;
-      });
-    }, 1200);
-
-    return () => clearInterval(interval);
-  }, []);
-
   // ---------------- HANDLERS ----------------
   const handleEventSelect = (event: EventType) => {
     setSelectedEventType(event);
-    setBookingForm((prev) => ({ ...prev, eventType: event._id }));
+    setBookingForm((prev) => ({
+      ...prev,
+      eventType: event._id
+    }));
     setShowBookingForm(true);
   };
 
   const handleHallSelect = (hall: PartyHall) => {
     const isSelected = bookingForm.selectedHall === hall._id;
-
     let newTotalCost = isSelected ? 0 : hall.price;
 
     allServices.forEach(service => {
@@ -331,7 +885,7 @@ export default function EventsBookingScreen() {
     setAllServices(allServices.map(s => ({ ...s, selected: false })));
     setBookingForm({
       eventType: "",
-      date: "",
+      date: new Date(),
       guests: "",
       name: "",
       email: "",
@@ -350,7 +904,7 @@ export default function EventsBookingScreen() {
       const token = await AsyncStorage.getItem("token");
 
       if (!token) {
-        Alert.alert("Error", "Please login first");
+        Alert.alert(t("error"), t("pleaseLogin"));
         return;
       }
 
@@ -371,39 +925,39 @@ export default function EventsBookingScreen() {
       });
 
       const data = await response.json();
-      console.log("Booking Response:", data);
 
       if (!response.ok) {
-        Alert.alert("Error", data.message || "Booking failed");
+        Alert.alert(t("error"), data.message || t("bookingFailed"));
         return;
       }
 
-      Alert.alert("Success", "Booking Created Successfully!");
+      Alert.alert(t("success"), t("bookingSuccess"));
       setShowBookingForm(false);
       resetForm();
-
     } catch (error) {
       console.log("Booking Error:", error);
-      Alert.alert("Error", "Something went wrong");
+      Alert.alert(t("error"), t("somethingWentWrong"));
     }
   };
 
   const goNext = () => {
     if (activeStep === 1) {
       if (!bookingForm.eventType) {
-        Alert.alert("Error", "Please select an event type");
+        Alert.alert(t("error"), t("selectEventFirst"));
         return;
       }
     }
+
     if (activeStep === 2) {
       if (!bookingForm.selectedHall) {
-        Alert.alert("Error", "Please select a party hall");
+        Alert.alert(t("error"), t("selectHallFirst"));
         return;
       }
     }
-    if (activeStep === 4) {
+
+    if (activeStep === 3) {
       if (!bookingForm.name || !bookingForm.email || !bookingForm.phone) {
-        Alert.alert("Error", "Please fill all required contact information");
+        Alert.alert(t("error"), t("fillContactInfo"));
         return;
       }
     }
@@ -415,7 +969,6 @@ export default function EventsBookingScreen() {
   const goBackStep = () => {
     if (activeStep > 1) setActiveStep((p) => p - 1);
   };
-
 
   // ---------------- RENDER ITEMS ----------------
   const renderEventTypeCard: ListRenderItem<EventType> = ({ item, index }) => {
@@ -449,28 +1002,24 @@ export default function EventsBookingScreen() {
           },
         ]}
       >
-        {/* ✅ Event Name */}
         <Text style={[styles.eventTypeTitle, { color: colors.text }]}>
           {item.name}
         </Text>
-
-        {/* ✅ Base Price */}
         <Text style={[styles.eventTypeDescription, { color: colors.subText }]}>
-          Starting from ₹{item.basePrice}
+          {t("startingFrom")} ₹{item.basePrice}
         </Text>
-
-        {/* ✅ Select Button */}
         <TouchableOpacity
           style={[styles.selectButton, { backgroundColor: colors.primary }]}
           onPress={() => handleEventSelect(item)}
         >
           <Text style={styles.selectButtonText}>
-            Select This Event
+            {t("selectThisEvent")}
           </Text>
         </TouchableOpacity>
       </Animated.View>
     );
   };
+
   const renderHallCard: ListRenderItem<PartyHall> = ({ item }) => {
     const isSelected = bookingForm.selectedHall === item._id;
 
@@ -492,24 +1041,37 @@ export default function EventsBookingScreen() {
         <View style={styles.hallHeader}>
           <View>
             <Text style={[styles.hallName, { color: colors.text }]}>{item.name}</Text>
-            <Text style={[styles.hallCapacity, { color: colors.subText }]}>Capacity: {item.capacity} people</Text>
+            <Text style={[styles.hallCapacity, { color: colors.subText }]}>
+              {t("capacity")}: {item.capacity} {t("people")}
+            </Text>
           </View>
           <View style={styles.priceContainer}>
-            <Text style={[styles.priceText, { color: colors.primary }]}>₹{item.price.toLocaleString()}</Text>
-            <Text style={[styles.priceLabel, { color: colors.subText }]}>per day</Text>
+            <Text style={[styles.priceText, { color: colors.primary }]}>
+              ₹{item.price.toLocaleString()}
+            </Text>
+            <Text style={[styles.priceLabel, { color: colors.subText }]}>
+              {t("perDay")}
+            </Text>
           </View>
         </View>
 
-        <Text style={[styles.hallDescription, { color: colors.subText }]}>{item.description}</Text>
+        <Text style={[styles.hallDescription, { color: colors.subText }]}>
+          {item.description}
+        </Text>
 
         <View style={styles.hallFeatures}>
           {item.features?.map((feature, idx) => (
-            <View key={`${item.id}-f-${idx}`} style={[
-              styles.hallFeatureTag,
-              { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#F8F8F8' }
-            ]}>
+            <View
+              key={`${item._id}-f-${idx}`}
+              style={[
+                styles.hallFeatureTag,
+                { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#F8F8F8' }
+              ]}
+            >
               <Ionicons name="checkmark" size={12} color={colors.success} />
-              <Text style={[styles.hallFeatureText, { color: colors.text }]}>{feature}</Text>
+              <Text style={[styles.hallFeatureText, { color: colors.text }]}>
+                {feature}
+              </Text>
             </View>
           ))}
         </View>
@@ -520,54 +1082,66 @@ export default function EventsBookingScreen() {
             size={20}
             color={isSelected ? colors.primary : colors.subText}
           />
-          <Text style={[
-            styles.selectHallText,
-            { color: isSelected ? colors.primary : colors.subText }
-          ]}>
-            {isSelected ? "Selected" : "Select Hall"}
+          <Text
+            style={[
+              styles.selectHallText,
+              { color: isSelected ? colors.primary : colors.subText }
+            ]}
+          >
+            {isSelected ? t("selected") : t("selectHall")}
           </Text>
         </View>
       </TouchableOpacity>
     );
   };
 
-  const renderTestimonialCard: ListRenderItem<Testimonial> = ({ item }) => (
-    <View style={[
-      styles.testimonialCard,
-      {
-        backgroundColor: colors.card,
-        borderColor: colors.border,
-      }
-    ]}>
-      <View style={styles.testimonialHeader}>
-        <View>
-          <Text style={[styles.testimonialName, { color: colors.text }]}>{item.name}</Text>
-          <Text style={styles.testimonialEvent}>{item.event}</Text>
-        </View>
+  const renderServiceCard = ({ item, index }: { item: typeof SERVICE_DATA[0]; index: number }) => {
+    const translateY = cardAnims[index].interpolate({
+      inputRange: [0, 1],
+      outputRange: [50, 0],
+    });
 
-        <View style={styles.ratingContainer}>
-          {Array.from({ length: 5 }).map((_, i) => (
-            <Ionicons
-              key={`${item.id}-star-${i}`}
-              name="star"
-              size={14}
-              color={i < item.rating ? "#FFD700" : colors.border}
-            />
-          ))}
-        </View>
-      </View>
+    const scale = cardAnims[index].interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.8, 1],
+    });
 
-      <Text style={[styles.testimonialText, { color: colors.subText }]}>"{item.review}"</Text>
-      <Text style={[styles.testimonialDate, { color: colors.subText }]}>{item.date}</Text>
-    </View>
-  );
-  const renderServiceCard = ({ item, index }) => {
+    const rotate = cardAnims[index].interpolate({
+      inputRange: [0, 1],
+      outputRange: ["-5deg", "0deg"],
+    });
+
+    const opacity = cardAnims[index];
+
     return (
-      <ServiceCard
-        item={item}
-        colors={colors}
-        entryAnim={servicesAnim[index]}
-      />
+      <Animated.View
+        style={[
+          styles.serviceCard,
+          {
+            backgroundColor: colors.card,
+            borderColor: colors.border,
+            opacity,
+            transform: [
+              { translateY },
+              { scale },
+              { rotate }
+            ],
+          },
+        ]}
+      >
+        <TouchableOpacity
+          activeOpacity={0.9}
+          style={{ alignItems: "center" }}
+        >
+          <Text style={styles.serviceIcon}>{item.icon}</Text>
+          <Text style={[styles.serviceTitle, { color: colors.text }]}>
+            {item.title}
+          </Text>
+          <Text style={[styles.serviceDescription, { color: colors.subText }]}>
+            {item.description}
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
     );
   };
 
@@ -583,20 +1157,15 @@ export default function EventsBookingScreen() {
         snapToAlignment="center"
         decelerationRate="fast"
         showsHorizontalScrollIndicator={false}
-
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { x: scrollX } } }],
-          {
-            useNativeDriver: false,
-            listener: handleScroll,
-          }
+          { useNativeDriver: false }
         )}
         scrollEventThrottle={16}
         contentContainerStyle={{
-          paddingHorizontal: (width - CARD_WIDTH) / 2-10,
+          paddingHorizontal: (width - CARD_WIDTH) / 2 - 10,
           alignItems: "center",
         }}
-
         getItemLayout={(data, index) => ({
           length: CARD_WIDTH,
           offset: CARD_WIDTH * index,
@@ -633,10 +1202,6 @@ export default function EventsBookingScreen() {
                   offset: i * CARD_WIDTH,
                   animated: true,
                 });
-                stopAutoScroll();
-                setTimeout(() => {
-                  startAutoScroll();
-                }, 5000);
               }}
               activeOpacity={0.7}
             >
@@ -654,13 +1219,24 @@ export default function EventsBookingScreen() {
           );
         })}
       </View>
-
-      <View style={styles.autoScrollIndicator}>
-
-
-      </View>
     </View>
   );
+
+  if (loading) {
+    return (
+      <SafeAreaView style={{
+        flex: 1,
+        justifyContent: "center",
+        alignItems: "center",
+        backgroundColor: colors.background
+      }}>
+        <Ionicons name="calendar" size={60} color={colors.primary} />
+        <Text style={{ marginTop: 12, fontSize: 16, color: colors.text }}>
+          {t("loading")}
+        </Text>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView
@@ -668,52 +1244,113 @@ export default function EventsBookingScreen() {
         styles.container,
         {
           backgroundColor: colors.background,
-          paddingTop: 0,   // 👈 YE ADD KARO
+          paddingTop: 0,
         },
       ]}
     >
+      <Animated.ScrollView
+        showsVerticalScrollIndicator={false}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+        style={{ opacity: fadeAnim }}
+      >
+        {/* Hero Section with Scroll Animation */}
+        <Animated.View
+          style={[
+            styles.heroSection,
+            { backgroundColor: colors.card },
+            {
+              opacity: heroOpacity,
+              transform: [
+                { scale: heroScale },
+                { translateY: slideAnim }
+              ],
+            }
+          ]}
+        >
+          <Animated.Text
+            style={[
+              styles.heroTitle,
+              { color: colors.primary },
+              {
+                opacity: headerAnim,
+                transform: [{
+                  translateX: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-50, 0]
+                  })
+                }]
+              }
+            ]}
+          >
+            {t("bookEvent")}
+          </Animated.Text>
 
+          <Animated.Text
+            style={[
+              styles.heroSubtitle,
+              { color: colors.subText },
+              {
+                opacity: headerAnim,
+                transform: [{
+                  translateX: headerAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-30, 0]
+                  })
+                }]
+              }
+            ]}
+          >
+            {t("heroDesc")}
+          </Animated.Text>
+        </Animated.View>
 
-
-
-      <ScrollView showsVerticalScrollIndicator={false}>
-        {/* Hero Section */}
-        <View style={[
-          styles.heroSection,
-          { backgroundColor: colors.card }
-        ]}>
-          <Text style={[styles.heroTitle, { color: colors.primary }]}>Book Your Event</Text>
-          <Text style={[styles.heroSubtitle, { color: colors.subText }]}>
-            Ready to plan your special celebration? Let us make it memorable!
-          </Text>
-        </View>
-
-        {/* Event Types Carousel */}
-        <View style={styles.section}>
+        {/* Event Types Carousel with Scroll Animation */}
+        <Animated.View
+          style={[
+            styles.section,
+            {
+              opacity: section1Opacity,
+              transform: [{ translateY: section1TranslateY }]
+            }
+          ]}
+        >
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Choose Event Type</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.subText }]}>Select from our curated event categories</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t("chooseEventType")}
+            </Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.subText }]}>
+              {t("selectEventSub")}
+            </Text>
           </View>
 
           {renderEventTypesCarousel()}
-        </View>
+        </Animated.View>
 
-        {/* Services Overview */}
-        <View style={styles.section}>
+        {/* Services Overview - What We Offer with Scroll Animation */}
+        <Animated.View
+          style={[
+            styles.section,
+            {
+              opacity: section2Opacity,
+              transform: [{ translateY: section2TranslateY }]
+            }
+          ]}
+        >
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>What We Offer</Text>
-            <Text style={[styles.sectionSubtitle, { color: colors.subText }]}>Complete event planning services</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>
+              {t("whatWeOffer")}
+            </Text>
+            <Text style={[styles.sectionSubtitle, { color: colors.subText }]}>
+              {t("offerSub")}
+            </Text>
           </View>
 
           <FlatList
-            data={[
-              { id: "1", title: "Customized Menu Planning", description: "Tailored food and beverage options", icon: "🍽️" },
-              { id: "2", title: "Professional Decorations", description: "Theme-based decoration and setup", icon: "🎨" },
-              { id: "3", title: "Dedicated Event Manager", description: "Personal coordinator for seamless execution", icon: "👨‍💼" },
-              { id: "4", title: "Photography Services", description: "Professional photography and videography", icon: "📸" },
-              { id: "5", title: "Special Group Pricing", description: "Exclusive discounts for group bookings", icon: "💰" },
-              { id: "6", title: "Entertainment Setup", description: "Music, DJ, and entertainment arrangements", icon: "🎵" },
-            ]}
+            data={SERVICE_DATA}
             renderItem={renderServiceCard}
             keyExtractor={(item) => item.id}
             numColumns={2}
@@ -721,17 +1358,24 @@ export default function EventsBookingScreen() {
             columnWrapperStyle={styles.servicesGrid}
             contentContainerStyle={styles.servicesContainer}
           />
-        </View>
+        </Animated.View>
 
-
-        {/* CTA */}
-        <View style={[
-          styles.ctaSection,
-          { backgroundColor: colors.card }
-        ]}>
-          <Text style={[styles.ctaTitle, { color: colors.primary }]}>Ready to Book Your Event?</Text>
+        {/* CTA with Scroll Animation */}
+        <Animated.View
+          style={[
+            styles.ctaSection,
+            { backgroundColor: colors.card },
+            {
+              opacity: ctaOpacity,
+              transform: [{ scale: ctaScale }]
+            }
+          ]}
+        >
+          <Text style={[styles.ctaTitle, { color: colors.primary }]}>
+            {t("readyToBook")}
+          </Text>
           <Text style={[styles.ctaText, { color: colors.subText }]}>
-            Have questions or ready to get started? Contact our event specialists today!
+            {t("contactSpecialists")}
           </Text>
 
           <TouchableOpacity
@@ -739,13 +1383,13 @@ export default function EventsBookingScreen() {
             onPress={() => setShowBookingForm(true)}
           >
             <Ionicons name="calendar" size={22} color="#FFFFFF" />
-            <Text style={styles.ctaButtonText}>Book Event Now</Text>
+            <Text style={styles.ctaButtonText}>{t("bookNow")}</Text>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         {/* Footer spacing for bottom tab */}
         <View style={{ height: 80 }} />
-      </ScrollView>
+      </Animated.ScrollView>
 
       {/* Booking Modal */}
       <Modal
@@ -755,16 +1399,10 @@ export default function EventsBookingScreen() {
         onRequestClose={() => setShowBookingForm(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[
-            styles.modalContainer,
-            { backgroundColor: colors.modalBackground }
-          ]}>
-            <View style={[
-              styles.modalHeader,
-              { borderBottomColor: colors.border }
-            ]}>
+          <View style={[styles.modalContainer, { backgroundColor: colors.modalBackground || colors.card }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: colors.border }]}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>
-                {selectedEventType ? `Book ${selectedEventType.name}` : "Event Booking Form"}
+                {selectedEventType ? `${t("bookEvent")} ${selectedEventType.name}` : t("eventDetails")}
               </Text>
               <TouchableOpacity onPress={() => setShowBookingForm(false)}>
                 <Ionicons name="close" size={24} color={colors.text} />
@@ -781,13 +1419,13 @@ export default function EventsBookingScreen() {
                       <View
                         style={[
                           styles.stepCircle,
-                          isActive ?
-                            { backgroundColor: colors.primary } :
-                            {
-                              backgroundColor: colors.inputBackground,
-                              borderWidth: 2,
-                              borderColor: colors.border
-                            }
+                          isActive
+                            ? { backgroundColor: colors.primary }
+                            : {
+                                backgroundColor: colors.inputBackground,
+                                borderWidth: 2,
+                                borderColor: colors.border
+                              }
                         ]}
                       >
                         <Text
@@ -799,17 +1437,16 @@ export default function EventsBookingScreen() {
                           {step}
                         </Text>
                       </View>
-
                       <Text
                         style={[
                           styles.stepLabel,
                           { color: isActive ? colors.primary : colors.subText },
                         ]}
                       >
-                        {step === 1 ? "Event" :
-                          step === 2 ? "Hall" :
-                            step === 3 ? "Contact" :
-                              "Review"}
+                        {step === 1 ? t("stepEvent") :
+                         step === 2 ? t("stepHall") :
+                         step === 3 ? t("stepContact") :
+                         t("stepReview")}
                       </Text>
                     </View>
                   );
@@ -819,10 +1456,14 @@ export default function EventsBookingScreen() {
               {/* Step 1: Event Details */}
               {activeStep === 1 && (
                 <View style={styles.formSection}>
-                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>Event Details</Text>
+                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>
+                    {t("eventDetails")}
+                  </Text>
 
                   <View style={styles.formGroup}>
-                    <Text style={[styles.label, { color: colors.text }]}>Event Type *</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>
+                      {t("eventType")}
+                    </Text>
                     <View style={styles.eventTypeSelector}>
                       {eventTypes.map((event) => (
                         <TouchableOpacity
@@ -830,24 +1471,26 @@ export default function EventsBookingScreen() {
                           style={[
                             styles.eventTypeOption,
                             {
-                              borderColor: event.color,
+                              borderColor: colors.primary,
                               backgroundColor: mode === 'dark' ? '#2D2D2D' : '#F8F8F8'
                             },
-                            bookingForm.eventType === event.id && [
+                            bookingForm.eventType === event._id && [
                               styles.selectedEventType,
                               { backgroundColor: mode === 'dark' ? '#3D2D2D' : '#FFF8E1' }
                             ],
                           ]}
                           onPress={() => {
-                            setBookingForm((prev) => ({ ...prev, eventType: event._id }));
+                            setBookingForm((prev) => ({
+                              ...prev,
+                              eventType: event._id
+                            }));
                             setSelectedEventType(event);
                           }}
                         >
-                          <Text style={styles.eventTypeOptionIcon}>{event.icon}</Text>
-                          <Text style={[
-                            styles.eventTypeOptionText,
-                            { color: colors.text }
-                          ]}>{event.name}</Text>
+                          <Text style={styles.eventTypeOptionIcon}>🎉</Text>
+                          <Text style={[styles.eventTypeOptionText, { color: colors.text }]}>
+                            {event.name}
+                          </Text>
                         </TouchableOpacity>
                       ))}
                     </View>
@@ -855,7 +1498,9 @@ export default function EventsBookingScreen() {
 
                   <View style={styles.formRow}>
                     <View style={[styles.formGroup, { flex: 1 }]}>
-                      <Text style={[styles.label, { color: colors.text }]}>Date *</Text>
+                      <Text style={[styles.label, { color: colors.text }]}>
+                        {t("date")}
+                      </Text>
                       <TouchableOpacity
                         style={[
                           styles.input,
@@ -867,25 +1512,22 @@ export default function EventsBookingScreen() {
                         ]}
                         onPress={() => setShowDatePicker(true)}
                       >
-                        <Text style={{ color: bookingForm.date ? colors.text : colors.subText }}>
-                          {bookingForm.date ? bookingForm.date : "Select date"}
+                        <Text style={{ color: colors.text }}>
+                          {bookingForm.date ? bookingForm.date.toDateString() : t("selectDate")}
                         </Text>
                       </TouchableOpacity>
 
                       {showDatePicker && (
                         <DateTimePicker
-                          value={bookingForm.date ? new Date(bookingForm.date) : new Date()}
+                          value={bookingForm.date}
                           mode="date"
                           display="default"
                           onChange={(event, selectedDate) => {
                             setShowDatePicker(false);
-
                             if (selectedDate) {
-                              const isoDate = selectedDate.toISOString().split("T")[0];
-
                               setBookingForm((prev) => ({
                                 ...prev,
-                                date: isoDate,
+                                date: selectedDate,
                               }));
                             }
                           }}
@@ -894,7 +1536,9 @@ export default function EventsBookingScreen() {
                     </View>
 
                     <View style={[styles.formGroup, { flex: 1 }]}>
-                      <Text style={[styles.label, { color: colors.text }]}>Guests *</Text>
+                      <Text style={[styles.label, { color: colors.text }]}>
+                        {t("guests")}
+                      </Text>
                       <TextInput
                         style={[
                           styles.input,
@@ -904,12 +1548,15 @@ export default function EventsBookingScreen() {
                             borderColor: colors.border
                           }
                         ]}
-                        placeholder="e.g., 50"
+                        placeholder={t("guestPlaceholder")}
                         placeholderTextColor={colors.subText}
                         keyboardType="numeric"
                         value={bookingForm.guests}
                         onChangeText={(text) =>
-                          setBookingForm((prev) => ({ ...prev, guests: text }))
+                          setBookingForm((prev) => ({
+                            ...prev,
+                            guests: text
+                          }))
                         }
                       />
                     </View>
@@ -920,9 +1567,11 @@ export default function EventsBookingScreen() {
               {/* Step 2: Hall Selection */}
               {activeStep === 2 && (
                 <View style={styles.formSection}>
-                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>Select Party Hall</Text>
+                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>
+                    {t("selectPartyHall")}
+                  </Text>
                   <Text style={[styles.sectionDescription, { color: colors.subText }]}>
-                    Choose the perfect venue for your event
+                    {t("chooseVenue")}
                   </Text>
 
                   <FlatList
@@ -933,9 +1582,11 @@ export default function EventsBookingScreen() {
                     contentContainerStyle={styles.hallsContainer}
                   />
 
-                  <Text style={[styles.formSectionTitle, { marginTop: 30, color: colors.text }]}>Additional Services</Text>
+                  <Text style={[styles.formSectionTitle, { marginTop: 30, color: colors.text }]}>
+                    {t("additionalServices")}
+                  </Text>
                   <Text style={[styles.sectionDescription, { color: colors.subText }]}>
-                    Customize your event with our premium services
+                    {t("customizeEvent")}
                   </Text>
 
                   <View style={styles.servicesGridModal}>
@@ -959,7 +1610,9 @@ export default function EventsBookingScreen() {
                         onPress={() => handleServiceToggle(service._id)}
                       >
                         <View style={styles.serviceOptionHeader}>
-                          <Text style={styles.serviceOptionIcon}>{service.icon}</Text>
+                          <Text style={styles.serviceOptionIcon}>
+                            {service.icon || "✨"}
+                          </Text>
                           <Ionicons
                             name={service.selected ? "checkbox" : "square-outline"}
                             size={20}
@@ -967,13 +1620,19 @@ export default function EventsBookingScreen() {
                           />
                         </View>
 
-                        <Text style={[styles.serviceOptionTitle, { color: colors.text }]}>{service.title}</Text>
-                        <Text style={[styles.serviceOptionDescription, { color: colors.subText }]}>{service.description}</Text>
+                        <Text style={[styles.serviceOptionTitle, { color: colors.text }]}>
+                          {service.title}
+                        </Text>
+                        <Text style={[styles.serviceOptionDescription, { color: colors.subText }]}>
+                          {service.description}
+                        </Text>
 
-                        <View style={[
-                          styles.servicePriceContainer,
-                          { backgroundColor: mode === 'dark' ? '#3D2D2D' : `${colors.primary}20` }
-                        ]}>
+                        <View
+                          style={[
+                            styles.servicePriceContainer,
+                            { backgroundColor: mode === 'dark' ? '#3D2D2D' : `${colors.primary}20` }
+                          ]}
+                        >
                           <Text style={[styles.servicePriceText, { color: colors.primary }]}>
                             + ₹{service.price.toLocaleString()}
                           </Text>
@@ -982,11 +1641,15 @@ export default function EventsBookingScreen() {
                     ))}
                   </View>
 
-                  <View style={[
-                    styles.totalCostContainer,
-                    { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#FFF8E1' }
-                  ]}>
-                    <Text style={[styles.totalCostLabel, { color: colors.text }]}>Total Estimated Cost:</Text>
+                  <View
+                    style={[
+                      styles.totalCostContainer,
+                      { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#FFF8E1' }
+                    ]}
+                  >
+                    <Text style={[styles.totalCostLabel, { color: colors.text }]}>
+                      {t("totalEstimated")}
+                    </Text>
                     <Text style={[styles.totalCostAmount, { color: colors.primary }]}>
                       ₹{bookingForm.totalCost.toLocaleString()}
                     </Text>
@@ -997,10 +1660,14 @@ export default function EventsBookingScreen() {
               {/* Step 3: Contact Information */}
               {activeStep === 3 && (
                 <View style={styles.formSection}>
-                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>Contact Information</Text>
+                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>
+                    {t("contactInfo")}
+                  </Text>
 
                   <View style={styles.formGroup}>
-                    <Text style={[styles.label, { color: colors.text }]}>Full Name *</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>
+                      {t("fullName")}
+                    </Text>
                     <TextInput
                       style={[
                         styles.input,
@@ -1010,16 +1677,23 @@ export default function EventsBookingScreen() {
                           borderColor: colors.border
                         }
                       ]}
-                      placeholder="Enter your name"
+                      placeholder={t("namePlaceholder")}
                       placeholderTextColor={colors.subText}
                       value={bookingForm.name}
-                      onChangeText={(text) => setBookingForm((prev) => ({ ...prev, name: text }))}
+                      onChangeText={(text) =>
+                        setBookingForm((prev) => ({
+                          ...prev,
+                          name: text
+                        }))
+                      }
                     />
                   </View>
 
                   <View style={styles.formRow}>
                     <View style={[styles.formGroup, { flex: 1 }]}>
-                      <Text style={[styles.label, { color: colors.text }]}>Email *</Text>
+                      <Text style={[styles.label, { color: colors.text }]}>
+                        {t("email")}
+                      </Text>
                       <TextInput
                         style={[
                           styles.input,
@@ -1029,18 +1703,23 @@ export default function EventsBookingScreen() {
                             borderColor: colors.border
                           }
                         ]}
-                        placeholder="email@example.com"
+                        placeholder={t("emailPlaceholder")}
                         placeholderTextColor={colors.subText}
                         keyboardType="email-address"
                         value={bookingForm.email}
                         onChangeText={(text) =>
-                          setBookingForm((prev) => ({ ...prev, email: text }))
+                          setBookingForm((prev) => ({
+                            ...prev,
+                            email: text
+                          }))
                         }
                       />
                     </View>
 
                     <View style={[styles.formGroup, { flex: 1 }]}>
-                      <Text style={[styles.label, { color: colors.text }]}>Phone *</Text>
+                      <Text style={[styles.label, { color: colors.text }]}>
+                        {t("phone")}
+                      </Text>
                       <TextInput
                         style={[
                           styles.input,
@@ -1050,19 +1729,24 @@ export default function EventsBookingScreen() {
                             borderColor: colors.border
                           }
                         ]}
-                        placeholder="9876543210"
+                        placeholder={t("phonePlaceholder")}
                         placeholderTextColor={colors.subText}
                         keyboardType="phone-pad"
                         value={bookingForm.phone}
                         onChangeText={(text) =>
-                          setBookingForm((prev) => ({ ...prev, phone: text }))
+                          setBookingForm((prev) => ({
+                            ...prev,
+                            phone: text
+                          }))
                         }
                       />
                     </View>
                   </View>
 
                   <View style={styles.formGroup}>
-                    <Text style={[styles.label, { color: colors.text }]}>Special Requirements</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>
+                      {t("specialRequirements")}
+                    </Text>
                     <TextInput
                       style={[
                         styles.input,
@@ -1073,19 +1757,24 @@ export default function EventsBookingScreen() {
                           borderColor: colors.border
                         }
                       ]}
-                      placeholder="Any special requests or requirements..."
+                      placeholder={t("requirementsPlaceholder")}
                       placeholderTextColor={colors.subText}
                       multiline
                       numberOfLines={4}
                       value={bookingForm.specialRequirements}
                       onChangeText={(text) =>
-                        setBookingForm((prev) => ({ ...prev, specialRequirements: text }))
+                        setBookingForm((prev) => ({
+                          ...prev,
+                          specialRequirements: text
+                        }))
                       }
                     />
                   </View>
 
                   <View style={styles.formGroup}>
-                    <Text style={[styles.label, { color: colors.text }]}>Budget (Optional)</Text>
+                    <Text style={[styles.label, { color: colors.text }]}>
+                      {t("budget")}
+                    </Text>
                     <TextInput
                       style={[
                         styles.input,
@@ -1095,11 +1784,14 @@ export default function EventsBookingScreen() {
                           borderColor: colors.border
                         }
                       ]}
-                      placeholder="e.g., ₹50,000"
+                      placeholder={t("budgetPlaceholder")}
                       placeholderTextColor={colors.subText}
                       value={bookingForm.budget}
                       onChangeText={(text) =>
-                        setBookingForm((prev) => ({ ...prev, budget: text }))
+                        setBookingForm((prev) => ({
+                          ...prev,
+                          budget: text
+                        }))
                       }
                     />
                   </View>
@@ -1109,53 +1801,75 @@ export default function EventsBookingScreen() {
               {/* Step 4: Review */}
               {activeStep === 4 && (
                 <View style={styles.formSection}>
-                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>Review Your Booking</Text>
+                  <Text style={[styles.formSectionTitle, { color: colors.text }]}>
+                    {t("reviewBooking")}
+                  </Text>
 
-                  <View style={[
-                    styles.summaryCard,
-                    { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#F8F8F8' }
-                  ]}>
-                    <Text style={[styles.summaryTitle, { color: colors.text }]}>Event Summary</Text>
-
-                    <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Event Type:</Text>
-                      <Text style={[styles.summaryValue, { color: colors.text }]}>{bookingForm.eventType || "-"}</Text>
-                    </View>
-
-                    <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Date:</Text>
-                      <Text style={[styles.summaryValue, { color: colors.text }]}>{bookingForm.date || "To be decided"}</Text>
-                    </View>
+                  <View
+                    style={[
+                      styles.summaryCard,
+                      { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#F8F8F8' }
+                    ]}
+                  >
+                    <Text style={[styles.summaryTitle, { color: colors.text }]}>
+                      {t("eventSummary")}
+                    </Text>
 
                     <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Guests:</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("eventTypeLabel")}
+                      </Text>
                       <Text style={[styles.summaryValue, { color: colors.text }]}>
-                        {bookingForm.guests || "Not specified"}
+                        {bookingForm.eventType || "-"}
+                      </Text>
+                    </View>
+
+                    <View style={styles.summaryRow}>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("dateLabel")}
+                      </Text>
+                      <Text style={[styles.summaryValue, { color: colors.text }]}>
+                        {bookingForm.date ? bookingForm.date.toDateString() : t("toBeDecided")}
+                      </Text>
+                    </View>
+
+                    <View style={styles.summaryRow}>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("guestsLabel")}
+                      </Text>
+                      <Text style={[styles.summaryValue, { color: colors.text }]}>
+                        {bookingForm.guests || t("notSpecified")}
                       </Text>
                     </View>
 
                     <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
                     <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Selected Hall:</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("selectedHall")}
+                      </Text>
                       <Text style={[styles.summaryValue, { color: colors.text }]}>
-                        {partyHalls.find(h => h._id === bookingForm.selectedHall)?.name || "Not selected"}
+                        {partyHalls.find(h => h._id === bookingForm.selectedHall)?.name || t("notSelected")}
                       </Text>
                     </View>
 
                     <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Services:</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("servicesLabel")}
+                      </Text>
                       <Text style={[styles.summaryValue, { color: colors.text }]}>
                         {bookingForm.selectedServices.length > 0
                           ? bookingForm.selectedServices.map(s => s.title).join(", ")
-                          : "None"}
+                          : t("none")}
                       </Text>
                     </View>
 
                     <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
                     <View style={[styles.summaryRow, styles.totalCostRow]}>
-                      <Text style={[styles.totalLabel, { color: colors.text }]}>Total Cost:</Text>
+                      <Text style={[styles.totalLabel, { color: colors.text }]}>
+                        {t("totalCost")}
+                      </Text>
                       <Text style={[styles.totalAmount, { color: colors.primary }]}>
                         ₹{bookingForm.totalCost.toLocaleString()}
                       </Text>
@@ -1164,38 +1878,49 @@ export default function EventsBookingScreen() {
                     <View style={[styles.summaryDivider, { backgroundColor: colors.border }]} />
 
                     <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Contact:</Text>
-                      <Text style={[styles.summaryValue, { color: colors.text }]}>{bookingForm.name || "-"}</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("contactLabel")}
+                      </Text>
+                      <Text style={[styles.summaryValue, { color: colors.text }]}>
+                        {bookingForm.name || "-"}
+                      </Text>
                     </View>
 
                     <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Email:</Text>
-                      <Text style={[styles.summaryValue, { color: colors.text }]}>{bookingForm.email || "-"}</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("emailLabel")}
+                      </Text>
+                      <Text style={[styles.summaryValue, { color: colors.text }]}>
+                        {bookingForm.email || "-"}
+                      </Text>
                     </View>
 
                     <View style={styles.summaryRow}>
-                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>Phone:</Text>
-                      <Text style={[styles.summaryValue, { color: colors.text }]}>{bookingForm.phone || "-"}</Text>
+                      <Text style={[styles.summaryLabel, { color: colors.subText }]}>
+                        {t("phoneLabel")}
+                      </Text>
+                      <Text style={[styles.summaryValue, { color: colors.text }]}>
+                        {bookingForm.phone || "-"}
+                      </Text>
                     </View>
                   </View>
 
-                  <View style={[
-                    styles.noteContainer,
-                    { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#FFF8E1' }
-                  ]}>
+                  <View
+                    style={[
+                      styles.noteContainer,
+                      { backgroundColor: mode === 'dark' ? '#2D2D2D' : '#FFF8E1' }
+                    ]}
+                  >
                     <Ionicons name="information-circle" size={20} color={colors.primary} />
                     <Text style={[styles.noteText, { color: colors.subText }]}>
-                      Our team will contact you within 24 hours to confirm details.
+                      {t("note")}
                     </Text>
                   </View>
                 </View>
               )}
             </ScrollView>
 
-            <View style={[
-              styles.modalActions,
-              { borderTopColor: colors.border }
-            ]}>
+            <View style={[styles.modalActions, { borderTopColor: colors.border }]}>
               {activeStep > 1 && (
                 <TouchableOpacity
                   style={[
@@ -1208,19 +1933,18 @@ export default function EventsBookingScreen() {
                   onPress={goBackStep}
                 >
                   <Ionicons name="arrow-back" size={18} color={colors.text} />
-                  <Text style={[styles.backButtonText, { color: colors.text }]}>Back</Text>
+                  <Text style={[styles.backButtonText, { color: colors.text }]}>
+                    {t("back")}
+                  </Text>
                 </TouchableOpacity>
               )}
 
               <TouchableOpacity
-                style={[
-                  styles.nextButton,
-                  { backgroundColor: colors.primary }
-                ]}
+                style={[styles.nextButton, { backgroundColor: colors.primary }]}
                 onPress={goNext}
               >
                 <Text style={styles.nextButtonText}>
-                  {activeStep === 4 ? "Submit" : "Next"}
+                  {activeStep === 4 ? t("submit") : t("next")}
                 </Text>
                 <Ionicons
                   name={activeStep === 4 ? "checkmark-circle" : "arrow-forward"}
@@ -1236,149 +1960,15 @@ export default function EventsBookingScreen() {
   );
 }
 
-const ServiceCard = ({ item, colors, entryAnim }) => {
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const rotateAnim = useRef(new Animated.Value(0)).current;
-
-  const handlePressIn = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 0.88,
-        friction: 4,
-        tension: 120,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.parallel([
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        friction: 3,
-        tension: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(rotateAnim, {
-        toValue: 0,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const rotate = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ["0deg", "2deg"],
-  });
-
-  const translateY = entryAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [40, 0],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        styles.serviceCard,
-        {
-          backgroundColor: colors.card,
-          borderColor: colors.border,
-          opacity: entryAnim,
-          transform: [{ translateY }, { scale: scaleAnim }, { rotate }],
-        },
-      ]}
-    >
-      <TouchableOpacity
-        activeOpacity={0.9}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        style={{ alignItems: "center" }}
-      >
-        <Text style={styles.serviceIcon}>{item.icon}</Text>
-        <Text style={[styles.serviceTitle, { color: colors.text }]}>
-          {item.title}
-        </Text>
-        <Text style={[styles.serviceDescription, { color: colors.subText }]}>
-          {item.description}
-        </Text>
-      </TouchableOpacity>
-    </Animated.View>
-  );
-};
-
 // ---------------- STYLES ----------------
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    paddingHorizontal: 16,
-    borderBottomWidth: 1,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 6,
-  },
-  menuButton: {
-    marginLeft: 0,
-  },
-  menuButtonInner: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTitleContainer: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    fontSize: 22,
-    fontWeight: "800",
-  },
-  cartButton: {
-    marginRight: 0,
-  },
-  cartIconContainer: {
-    position: "relative",
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  cartBadge: {
-    position: "absolute",
-    top: -2,
-    right: -2,
-    borderRadius: 10,
-    width: 22,
-    height: 22,
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: '#fff',
-  },
-  cartBadgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "bold",
-  },
   heroSection: {
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 30,
-
   },
   heroTitle: {
     fontSize: 28,
@@ -1410,11 +2000,8 @@ const styles = StyleSheet.create({
   carouselContainer: {
     marginBottom: 20,
   },
-  carouselContent: {
-    paddingRight: 20,
-  },
   eventTypeCard: {
-    width: CARD_WIDTH, // 85% screen width
+    width: CARD_WIDTH,
     borderRadius: 20,
     padding: 25,
     shadowColor: "#000",
@@ -1424,18 +2011,6 @@ const styles = StyleSheet.create({
     elevation: 5,
     borderWidth: 1,
     alignItems: "center",
-  }
-  ,
-  eventIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    justifyContent: "center",
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  eventIcon: {
-    fontSize: 40,
   },
   eventTypeTitle: {
     fontSize: 22,
@@ -1448,25 +2023,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     lineHeight: 20,
     marginBottom: 20,
-  },
-  featuresContainer: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    gap: 10,
-    marginBottom: 25,
-  },
-  featureTag: {
-    flexDirection: "row",
-    alignItems: "center",
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 15,
-    gap: 5,
-  },
-  featureText: {
-    fontSize: 11,
-    fontWeight: "600",
   },
   selectButton: {
     flexDirection: "row",
@@ -1490,17 +2046,6 @@ const styles = StyleSheet.create({
   dot: {
     height: 8,
     borderRadius: 4,
-  },
-  autoScrollIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 10,
-    gap: 6,
-  },
-  autoScrollText: {
-    fontSize: 12,
-    fontStyle: 'italic',
   },
   servicesGrid: {
     justifyContent: "space-between",
@@ -1536,50 +2081,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     textAlign: "center",
     lineHeight: 16,
-  },
-  testimonialsContainer: {
-    paddingRight: 20,
-  },
-  testimonialCard: {
-    width: CARD_WIDTH,
-    borderRadius: 15,
-    padding: 20,
-    marginRight: 0,
-    alignSelf: "center",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
-    borderWidth: 1,
-  },
-  testimonialHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
-    marginBottom: 15,
-  },
-  testimonialName: {
-    fontSize: 16,
-    fontWeight: "700",
-  },
-  testimonialEvent: {
-    fontSize: 12,
-    color: "#FF8A00",
-    marginTop: 2,
-  },
-  ratingContainer: {
-    flexDirection: "row",
-    gap: 2,
-  },
-  testimonialText: {
-    fontSize: 14,
-    fontStyle: "italic",
-    lineHeight: 20,
-    marginBottom: 10,
-  },
-  testimonialDate: {
-    fontSize: 12,
   },
   ctaSection: {
     padding: 30,

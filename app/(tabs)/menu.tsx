@@ -22,6 +22,7 @@ import { useLocalSearchParams, useRouter } from "expo-router";
 import { useState, useRef, useEffect } from "react";
 import Colors from "@/constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useTheme } from "../data/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
 
@@ -42,63 +43,193 @@ const AVAILABLE_IMAGES = {
   roti: require("../../assets/images/roti.png"),
 };
 
-/* ================= ALL MENU ITEMS IN ONE ARRAY ================= */
-// const ALL_MENU_ITEMS = [
-//   // South Indian
-//   { id: "1", name: "Masala Dosa", price: "₹120", description: "Crispy crepe with potato filling", rating: 4.5, isVeg: true, image: AVAILABLE_IMAGES.si, category: "South Indian" },
-//   { id: "2", name: "Idli Sambhar", price: "₹80", description: "Soft rice cakes with lentil soup", rating: 4.3, isVeg: true, image: AVAILABLE_IMAGES.si, category: "South Indian" },
-//   { id: "3", name: "Vada Sambhar", price: "₹90", description: "Fried lentil donuts with soup", rating: 4.2, isVeg: true, image: AVAILABLE_IMAGES.si, category: "South Indian" },
-//   { id: "4", name: "Uttapam", price: "₹100", description: "Thick pancake with toppings", rating: 4.4, isVeg: true, image: AVAILABLE_IMAGES.si, category: "South Indian" },
-//   { id: "5", name: "Pongal", price: "₹110", description: "Rice and lentil porridge", rating: 4.6, isVeg: true, image: AVAILABLE_IMAGES.si, category: "South Indian" },
+// 🔥 TRANSLATIONS FOR 5 LANGUAGES
+const translations = {
+  en: {
+    loading: "Loading delicious menu...",
+    searchPlaceholder: "Search food items...",
+    suggestionsFor: "Suggestions for",
+    filters: "Filters",
+    filtersApplied: "Filters • Applied",
+    applyFilters: "Apply Filters",
+    resetAll: "Reset All",
+    sortBy: "Sort By",
+    relevance: "Relevance",
+    priceLowHigh: "Price: Low to High",
+    priceHighLow: "Price: High to Low",
+    rating: "Rating",
+    name: "Name",
+    minimumRating: "Minimum Rating",
+    allRatings: "All Ratings",
+    stars35: "3.5+ Stars",
+    stars40: "4.0+ Stars",
+    stars45: "4.5+ Stars",
+    priceRange: "Price Range",
+    allPrices: "All Prices",
+    under100: "Under ₹100",
+    between100200: "₹100 - ₹200",
+    above200: "Above ₹200",
+    noItemsFound: "No items found",
+    resetAllFilters: "Reset All Filters",
+    category: "Category",
+    addToCart: "Add to Cart",
+    quickFilters: {
+      topRated: "Top Rated",
+      lowToHigh: "₹ Low to High",
+    },
+    itemModal: {
+      addToCart: "Add to Cart",
+    },
+  },
 
-//   // Breakfast/Nasta corner
-//   { id: "6", name: "Poha", price: "₹60", description: "Flattened rice with vegetables", rating: 4.2, isVeg: true, image: AVAILABLE_IMAGES.bn, category: "Breakfast/Nasta corner" },
-//   { id: "7", name: "Upma", price: "₹65", description: "Semolina savory porridge", rating: 4.0, isVeg: true, image: AVAILABLE_IMAGES.bn, category: "Breakfast/Nasta corner" },
-//   { id: "8", name: "Sandwich", price: "₹90", description: "Grilled vegetable sandwich", rating: 4.3, isVeg: true, image: AVAILABLE_IMAGES.bn, category: "Breakfast/Nasta corner" },
-//   { id: "9", name: "Paratha", price: "₹70", description: "Layered flatbread with curd", rating: 4.1, isVeg: true, image: AVAILABLE_IMAGES.r, category: "Breakfast/Nasta corner" },
+  hi: {
+    loading: "स्वादिष्ट मेन्यू लोड हो रहा है...",
+    searchPlaceholder: "खाद्य पदार्थ खोजें...",
+    suggestionsFor: "सुझाव",
+    filters: "फ़िल्टर",
+    filtersApplied: "फ़िल्टर • लागू",
+    applyFilters: "फ़िल्टर लागू करें",
+    resetAll: "सभी रीसेट करें",
+    sortBy: "क्रमबद्ध करें",
+    relevance: "प्रासंगिकता",
+    priceLowHigh: "मूल्य: कम से अधिक",
+    priceHighLow: "मूल्य: अधिक से कम",
+    rating: "रेटिंग",
+    name: "नाम",
+    minimumRating: "न्यूनतम रेटिंग",
+    allRatings: "सभी रेटिंग",
+    stars35: "3.5+ स्टार",
+    stars40: "4.0+ स्टार",
+    stars45: "4.5+ स्टार",
+    priceRange: "मूल्य सीमा",
+    allPrices: "सभी मूल्य",
+    under100: "₹100 से कम",
+    between100200: "₹100 - ₹200",
+    above200: "₹200 से अधिक",
+    noItemsFound: "कोई आइटम नहीं मिला",
+    resetAllFilters: "सभी फ़िल्टर रीसेट करें",
+    category: "श्रेणी",
+    addToCart: "कार्ट में जोड़ें",
+    quickFilters: {
+      topRated: "टॉप रेटेड",
+      lowToHigh: "₹ कम से अधिक",
+    },
+    itemModal: {
+      addToCart: "कार्ट में जोड़ें",
+    },
+  },
 
-//   // Morning Beverages
-//   { id: "10", name: "Masala Chai", price: "₹30", description: "Spiced Indian tea", rating: 4.7, isVeg: true, image: AVAILABLE_IMAGES.mb, category: "Morning Beverages" },
-//   { id: "11", name: "Coffee", price: "₹40", description: "Filter coffee", rating: 4.5, isVeg: true, image: AVAILABLE_IMAGES.mb, category: "Morning Beverages" },
-//   { id: "12", name: "Badam Milk", price: "₹60", description: "Almond milk", rating: 4.4, isVeg: true, image: AVAILABLE_IMAGES.mb, category: "Morning Beverages" },
-//   { id: "13", name: "Fresh Juice", price: "₹80", description: "Seasonal fruit juice", rating: 4.6, isVeg: true, image: AVAILABLE_IMAGES.mb, category: "Morning Beverages" },
+  mr: {
+    loading: "स्वादिष्ट मेनू लोड होत आहे...",
+    searchPlaceholder: "अन्न शोधा...",
+    suggestionsFor: "सूचना",
+    filters: "फिल्टर",
+    filtersApplied: "फिल्टर • लागू",
+    applyFilters: "फिल्टर लागू करा",
+    resetAll: "सर्व रीसेट करा",
+    sortBy: "क्रमवारी लावा",
+    relevance: "संबंधितता",
+    priceLowHigh: "किंमत: कमी ते जास्त",
+    priceHighLow: "किंमत: जास्त ते कमी",
+    rating: "रेटिंग",
+    name: "नाव",
+    minimumRating: "किमान रेटिंग",
+    allRatings: "सर्व रेटिंग",
+    stars35: "3.5+ स्टार",
+    stars40: "4.0+ स्टार",
+    stars45: "4.5+ स्टार",
+    priceRange: "किंमत श्रेणी",
+    allPrices: "सर्व किंमती",
+    under100: "₹100 पेक्षा कमी",
+    between100200: "₹100 - ₹200",
+    above200: "₹200 पेक्षा जास्त",
+    noItemsFound: "कोणतीही वस्तू सापडली नाही",
+    resetAllFilters: "सर्व फिल्टर रीसेट करा",
+    category: "श्रेणी",
+    addToCart: "कार्टमध्ये जोडा",
+    quickFilters: {
+      topRated: "टॉप रेटेड",
+      lowToHigh: "₹ कमी ते जास्त",
+    },
+    itemModal: {
+      addToCart: "कार्टमध्ये जोडा",
+    },
+  },
 
-//   // Soup
-//   { id: "14", name: "Tomato Soup", price: "₹90", description: "Creamy tomato soup", rating: 4.3, isVeg: true, image: AVAILABLE_IMAGES.soup, category: "Soup" },
-//   { id: "15", name: "Sweet Corn Soup", price: "₹100", description: "Vegetable corn soup", rating: 4.4, isVeg: true, image: AVAILABLE_IMAGES.soup, category: "Soup" },
-//   { id: "16", name: "Hot & Sour Soup", price: "₹110", description: "Spicy sour soup", rating: 4.5, isVeg: true, image: AVAILABLE_IMAGES.soup, category: "Soup" },
-//   { id: "17", name: "Manchow Soup", price: "₹120", description: "Noodle vegetable soup", rating: 4.6, isVeg: true, image: AVAILABLE_IMAGES.soup, category: "Soup" },
+  ta: {
+    loading: "சுவையான மெனு ஏற்றப்படுகிறது...",
+    searchPlaceholder: "உணவு பொருட்களை தேடுங்கள்...",
+    suggestionsFor: "பரிந்துரைகள்",
+    filters: "வடிப்பான்கள்",
+    filtersApplied: "வடிப்பான்கள் • பயன்படுத்தப்பட்டது",
+    applyFilters: "வடிப்பான்களை பயன்படுத்து",
+    resetAll: "அனைத்தையும் மீட்டமை",
+    sortBy: "வரிசைப்படுத்து",
+    relevance: "பொருத்தம்",
+    priceLowHigh: "விலை: குறைந்தது முதல் அதிகம்",
+    priceHighLow: "விலை: அதிகம் முதல் குறைந்தது",
+    rating: "மதிப்பீடு",
+    name: "பெயர்",
+    minimumRating: "குறைந்தபட்ச மதிப்பீடு",
+    allRatings: "அனைத்து மதிப்பீடுகள்",
+    stars35: "3.5+ நட்சத்திரங்கள்",
+    stars40: "4.0+ நட்சத்திரங்கள்",
+    stars45: "4.5+ நட்சத்திரங்கள்",
+    priceRange: "விலை வரம்பு",
+    allPrices: "அனைத்து விலைகள்",
+    under100: "₹100 க்கும் குறைவு",
+    between100200: "₹100 - ₹200",
+    above200: "₹200 க்கும் மேல்",
+    noItemsFound: "எந்த பொருளும் கிடைக்கவில்லை",
+    resetAllFilters: "அனைத்து வடிப்பான்களையும் மீட்டமை",
+    category: "வகை",
+    addToCart: "வண்டியில் சேர்க்கவும்",
+    quickFilters: {
+      topRated: "சிறந்த மதிப்பீடு",
+      lowToHigh: "₹ குறைந்தது முதல் அதிகம்",
+    },
+    itemModal: {
+      addToCart: "வண்டியில் சேர்க்கவும்",
+    },
+  },
 
-//   // Evening Snacks
-//   { id: "18", name: "Samosa", price: "₹40", description: "Fried pastry with potato filling", rating: 4.5, isVeg: true, image: AVAILABLE_IMAGES.ev, category: "Evening Snacks" },
-//   { id: "19", name: "Kachori", price: "₹45", description: "Stuffed fried snack", rating: 4.3, isVeg: true, image: AVAILABLE_IMAGES.ev, category: "Evening Snacks" },
-//   { id: "20", name: "Pakora", price: "₹50", description: "Vegetable fritters", rating: 4.4, isVeg: true, image: AVAILABLE_IMAGES.ev, category: "Evening Snacks" },
-//   { id: "21", name: "Bread Pakoda", price: "₹60", description: "Bread slices fried in batter", rating: 4.2, isVeg: true, image: AVAILABLE_IMAGES.ev, category: "Evening Snacks" },
-
-//   // Fresh & Eat
-//   { id: "22", name: "Fruit Salad", price: "₹100", description: "Fresh seasonal fruits", rating: 4.6, isVeg: true, image: AVAILABLE_IMAGES.fe, category: "Fresh & Eat" },
-//   { id: "23", name: "Sprouts Salad", price: "₹80", description: "Healthy sprouted beans", rating: 4.4, isVeg: true, image: AVAILABLE_IMAGES.fe, category: "Fresh & Eat" },
-//   { id: "24", name: "Green Salad", price: "₹70", description: "Fresh vegetables", rating: 4.3, isVeg: true, image: AVAILABLE_IMAGES.fe, category: "Fresh & Eat" },
-
-//   // Main Course
-//   { id: "25", name: "Thali", price: "₹180", description: "Complete meal with variety", rating: 4.7, isVeg: true, image: AVAILABLE_IMAGES.mc, category: "Main Course" },
-//   { id: "26", name: "Rice Plate", price: "₹120", description: "Rice with vegetables", rating: 4.4, isVeg: true, image: AVAILABLE_IMAGES.mc, category: "Main Course" },
-//   { id: "27", name: "Roti Sabji", price: "₹110", description: "Indian bread with curry", rating: 4.5, isVeg: true, image: AVAILABLE_IMAGES.r, category: "Main Course" },
-
-//   // Mini Snacks
-//   { id: "28", name: "Chips", price: "₹20", description: "Potato chips", rating: 4.0, isVeg: true, image: AVAILABLE_IMAGES.ms, category: "Mini Snacks" },
-//   { id: "29", name: "Biscuits", price: "₹25", description: "Assorted cookies", rating: 4.1, isVeg: true, image: AVAILABLE_IMAGES.ms, category: "Mini Snacks" },
-//   { id: "30", name: "Namkeen", price: "₹30", description: "Indian savory mix", rating: 4.3, isVeg: true, image: AVAILABLE_IMAGES.ms, category: "Mini Snacks" },
-
-//   // Organic Food
-//   { id: "31", name: "Organic Salad", price: "₹150", description: "Fresh organic vegetables", rating: 4.8, isVeg: true, image: AVAILABLE_IMAGES.of, category: "Organic Food" },
-//   { id: "32", name: "Herbal Tea", price: "₹50", description: "Organic herbal infusion", rating: 4.6, isVeg: true, image: AVAILABLE_IMAGES.of, category: "Organic Food" },
-
-//   // Traditional Sweets
-//   { id: "33", name: "Gulab Jamun", price: "₹60", description: "Sweet milk dumplings", rating: 4.7, isVeg: true, image: AVAILABLE_IMAGES.ts, category: "Traditional Sweets" },
-//   { id: "34", name: "Rasgulla", price: "₹55", description: "Sweet cheese balls", rating: 4.6, isVeg: true, image: AVAILABLE_IMAGES.ts, category: "Traditional Sweets" },
-//   { id: "35", name: "Jalebi", price: "₹50", description: "Sweet spiral dessert", rating: 4.5, isVeg: true, image: AVAILABLE_IMAGES.ts, category: "Traditional Sweets" },
-// ];
+  gu: {
+    loading: "સ્વાદિષ્ટ મેનુ લોડ થઈ રહ્યું છે...",
+    searchPlaceholder: "ખાદ્ય વસ્તુઓ શોધો...",
+    suggestionsFor: "સૂચનો",
+    filters: "ફિલ્ટર્સ",
+    filtersApplied: "ફિલ્ટર્સ • લાગુ કરેલ",
+    applyFilters: "ફિલ્ટર્સ લાગુ કરો",
+    resetAll: "બધું રીસેટ કરો",
+    sortBy: "ક્રમમાં ગોઠવો",
+    relevance: "સુસંગતતા",
+    priceLowHigh: "કિંમત: ઓછી થી વધુ",
+    priceHighLow: "કિંમત: વધુ થી ઓછી",
+    rating: "રેટિંગ",
+    name: "નામ",
+    minimumRating: "ન્યૂનતમ રેટિંગ",
+    allRatings: "બધા રેટિંગ્સ",
+    stars35: "3.5+ સ્ટાર",
+    stars40: "4.0+ સ્ટાર",
+    stars45: "4.5+ સ્ટાર",
+    priceRange: "કિંમત શ્રેણી",
+    allPrices: "બધી કિંમતો",
+    under100: "₹100 થી ઓછી",
+    between100200: "₹100 - ₹200",
+    above200: "₹200 થી વધુ",
+    noItemsFound: "કોઈ વસ્તુ મળી નથી",
+    resetAllFilters: "બધા ફિલ્ટર્સ રીસેટ કરો",
+    category: "શ્રેણી",
+    addToCart: "કાર્ટમાં ઉમેરો",
+    quickFilters: {
+      topRated: "ટોપ રેટેડ",
+      lowToHigh: "₹ ઓછી થી વધુ",
+    },
+    itemModal: {
+      addToCart: "કાર્ટમાં ઉમેરો",
+    },
+  },
+};
 
 // Filter types
 type SortOption = 'relevance' | 'price-low' | 'price-high' | 'rating' | 'name';
@@ -106,7 +237,7 @@ type RatingFilter = 'all' | '3.5+' | '4.0+' | '4.5+';
 type PriceFilter = 'all' | 'under-100' | '100-200' | '200+';
 
 // Helper function to highlight search term in text
-const HighlightText = ({ text, searchTerm, style }: { text: string; searchTerm: string; style: any }) => {
+const HighlightText = ({ text, searchTerm, style, colors }: { text: string; searchTerm: string; style: any; colors: any }) => {
   if (!searchTerm.trim()) {
     return <Text style={style}>{text}</Text>;
   }
@@ -126,7 +257,7 @@ const HighlightText = ({ text, searchTerm, style }: { text: string; searchTerm: 
   return (
     <Text style={style}>
       {before}
-      <Text style={[style, { color: Colors.primary, fontWeight: '800' }]}>
+      <Text style={[style, { color: colors.primary, fontWeight: '800' }]}>
         {matched}
       </Text>
       {after}
@@ -135,9 +266,49 @@ const HighlightText = ({ text, searchTerm, style }: { text: string; searchTerm: 
 };
 
 export default function MenuScreen() {
-
+  const { colors, mode } = useTheme();
   const router = useRouter();
   const { categoryId } = useLocalSearchParams();
+
+  // Language state
+  const [languageCode, setLanguageCode] = useState("en");
+
+  // Load saved language from AsyncStorage
+  useEffect(() => {
+    loadLanguage();
+  }, []);
+
+  const loadLanguage = async () => {
+    try {
+      const savedLang = await AsyncStorage.getItem('appLanguage');
+      if (savedLang && translations[savedLang as keyof typeof translations]) {
+        setLanguageCode(savedLang);
+      }
+    } catch (error) {
+      console.log('Error loading language:', error);
+    }
+  };
+
+  // 🔥 Translation function
+  const t = (key: string) => {
+    const keys = key.split('.');
+    let value: any = translations[languageCode as keyof typeof translations];
+
+    for (const k of keys) {
+      if (value && value[k] !== undefined) {
+        value = value[k];
+      } else {
+        // Fallback to English
+        let fallback: any = translations.en;
+        for (const fk of keys) {
+          fallback = fallback?.[fk];
+        }
+        return fallback || key;
+      }
+    }
+    return value || key;
+  };
+
   const [menuItems, setMenuItems] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -153,7 +324,7 @@ export default function MenuScreen() {
   const [sortBy, setSortBy] = useState<SortOption>('relevance');
   const [ratingFilter, setRatingFilter] = useState<RatingFilter>('all');
   const [priceFilter, setPriceFilter] = useState<PriceFilter>('all');
-  const [compactView, setCompactView] = useState(false); // New state for compact view
+  const [compactView, setCompactView] = useState(false);
 
   const [keyboardVisible, setKeyboardVisible] = useState(false);
 
@@ -163,19 +334,13 @@ export default function MenuScreen() {
   const slideAnim = useRef(new Animated.Value(30)).current;
   const filterSlideAnim = useRef(new Animated.Value(300)).current;
   const itemAnim = useRef(new Animated.Value(50)).current;
+  const rotateAnim = useRef(new Animated.Value(0)).current;
+  const suggestionAnim = useRef(new Animated.Value(0)).current;
 
-  // Check if any filter is active
+  // 🔥 FIX: Check if any filter is active (excluding search)
   const isFilterActive = () => {
-    return sortBy !== 'relevance' || ratingFilter !== 'all' || priceFilter !== 'all' || searchQuery !== "";
+    return sortBy !== 'relevance' || ratingFilter !== 'all' || priceFilter !== 'all';
   };
-
-  // Update compactView based on filters
-  useEffect(() => {
-    // Set compactView to true if any filter is active
-    if (isFilterActive()) {
-      setCompactView(true);
-    }
-  }, [sortBy, ratingFilter, priceFilter, searchQuery]);
 
   // Initialize animations
   useEffect(() => {
@@ -202,6 +367,14 @@ export default function MenuScreen() {
         useNativeDriver: true,
       }),
     ]).start();
+
+    Animated.loop(
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 4000,
+        useNativeDriver: true,
+      })
+    ).start();
   }, []);
 
   // Filter modal animation
@@ -227,14 +400,12 @@ export default function MenuScreen() {
 
       let url = `${BASE_URL}/api/foods`;
 
-      // Only add category filter if categoryId exists
       if (categoryId) {
         url = `${BASE_URL}/api/foods?category=${categoryId}`;
       }
 
       const response = await axios.get(url);
-
-      console.log("FOODS DATA:", response.data); // 🔥 DEBUGconsole.log("CART API CALLED");
+      setMenuItems(response.data);
 
       setMenuItems(response.data);
 
@@ -243,7 +414,9 @@ export default function MenuScreen() {
     } finally {
       setLoading(false);
     }
-  };  // Keyboard listeners
+  };
+
+  // Keyboard listeners
   useEffect(() => {
     const keyboardDidShowListener = Keyboard.addListener(
       'keyboardDidShow',
@@ -264,12 +437,10 @@ export default function MenuScreen() {
     };
   }, []);
 
-  // Helper function to extract numeric price from string like "₹120"
+  // Helper function to extract numeric price
   const extractPrice = (price: any): number => {
     return typeof price === "number" ? price : 0;
   };
-
-
 
   // Function to get search suggestions
   const getSearchSuggestions = (query: string) => {
@@ -347,15 +518,21 @@ export default function MenuScreen() {
     return items;
   };
 
-  // Update search suggestions when query changes
   useEffect(() => {
     if (searchQuery.trim()) {
       const suggestions = getSearchSuggestions(searchQuery);
       setSearchSuggestions(suggestions);
       setShowSuggestions(true);
+      Animated.spring(suggestionAnim, {
+        toValue: 1,
+        tension: 50,
+        friction: 8,
+        useNativeDriver: true,
+      }).start();
     } else {
       setShowSuggestions(false);
       setSearchSuggestions([]);
+      suggestionAnim.setValue(0);
     }
   }, [searchQuery]);
 
@@ -367,49 +544,47 @@ export default function MenuScreen() {
     setShowSuggestions(false);
     setShowItemModal(true);
   };
-const addToCart = async (item: any) => {
-  try {
 
-    const token = await AsyncStorage.getItem("token");
+  const addToCart = async (item: any) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
 
-    console.log("FOOD ID:", item._id);
-    console.log("QUANTITY:", quantity);
+      console.log("FOOD ID:", item._id);
+      console.log("QUANTITY:", quantity);
 
-    await axios.post(
-      `${BASE_URL}/api/cart`,
-      {
-        foodId: item._id,
-        quantity: quantity
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
+      await axios.post(
+        `${BASE_URL}/api/cart`,
+        {
+          foodId: item._id,
+          quantity: quantity
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         }
-      }
+      );
+
+      console.log("ITEM ADDED TO CART");
+
+      setShowItemModal(false);
+      setQuantity(1);
+      router.push("/cart");
+
+    } catch (error: any) {
+      console.log("CART ERROR:", error.response?.data || error.message);
+    }
+  };
+
+  const updateQuantity = (_id: string, delta: number) => {
+    setCart(prev =>
+      prev.map(item =>
+        item._id === _id
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          : item
+      )
     );
-
-    console.log("ITEM ADDED TO CART");
-
-    setShowItemModal(false);
-    setQuantity(1);
-
-    router.push("/cart");
-
-  } catch (error:any) {
-    console.log("CART ERROR:", error.response?.data || error.message);
-  }
-};
-
-
-const updateQuantity = (_id: string, delta: number) => {
-  setCart(prev =>
-    prev.map(item =>
-      item._id === _id
-        ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-        : item
-    )
-  );
-};
+  };
 
   const removeFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item._id !== id));
@@ -420,8 +595,7 @@ const updateQuantity = (_id: string, delta: number) => {
     setSortBy('relevance');
     setRatingFilter('all');
     setPriceFilter('all');
-    setSearchQuery("");
-    setCompactView(false);
+    // 🔥 Don't reset search query here
   };
 
   const renderStars = (rating?: number) => {
@@ -434,149 +608,168 @@ const updateQuantity = (_id: string, delta: number) => {
             key={star}
             name={star <= safeRating ? "star" : "star-outline"}
             size={12}
-            color={star <= safeRating ? "#FFD700" : "#CCCCCC"}
+            color={star <= safeRating ? "#FFD700" : colors.border}
           />
         ))}
-        <Text style={styles.ratingText}>
+        <Text style={[styles.ratingText, { color: colors.text }]}>
           {safeRating.toFixed(1)}
         </Text>
       </View>
     );
   };
-  // Render compact cards when filters are active
-  const renderCompactCard = (item: any) => (
-    <View
-  style={styles.compactCard}
-      activeOpacity={0.7}
-      onPress={() => {
-        setSelectedItem(item);
-        setShowItemModal(true);
-      }}
-    >
-      <View style={styles.compactImageContainer}>
-        <Image
-          source={{
-            uri: item.image && item.image.startsWith("http")
-              ? item.image
-              : "https://via.placeholder.com/150"
-          }}
-          style={styles.compactImage}
-        />
-        <View style={styles.vegIndicator}>
-          <View style={styles.vegDot} />
-        </View>
-      </View>
 
-      <View style={styles.compactContent}>
-        <View style={styles.compactHeader}>
-          <Text style={styles.compactName} numberOfLines={1}>{item.name}</Text>
-          <View style={styles.compactCategoryTag}>
-            <Text style={styles.compactCategoryText}>{item.category}</Text>
-          </View>
-        </View>
-
-        <Text style={styles.compactDescription} numberOfLines={2}>
-          {item.description}
-        </Text>
-
-        {renderStars(item.rating || 4)}
-
-        <View style={styles.compactFooter}>
-          <Text style={styles.compactPrice}>₹{item.price}</Text>
-          <TouchableOpacity
-            style={styles.compactAddButton}
-            onPress={() => {
-              setSelectedItem(item);
-              setQuantity(1);
-              addToCart(item);
-            }}
-            activeOpacity={0.8}
-          >
-            <Text style={styles.compactAddButtonText}>ADD</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
-  // Render full card when no filters are active
- const renderFullCard = (item: any) => (
-  <View style={styles.fullCard}>
-
-    <View style={styles.fullImageContainer}>
-      <Image
-        source={{
-          uri: item.image && item.image.startsWith("http")
-            ? item.image
-            : "https://via.placeholder.com/150"
-        }}
-        style={styles.fullImage}
-      />
-      <View style={styles.vegIndicator}>
-        <View style={styles.vegDot} />
-      </View>
-    </View>
-
-    <View style={styles.fullContent}>
-      <View style={styles.fullHeader}>
-        <Text style={styles.fullName} numberOfLines={1}>
-          {item.name}
-        </Text>
-        <View style={styles.fullCategoryTag}>
-          <Text style={styles.fullCategoryText}>
-            {item.category}
-          </Text>
-        </View>
-      </View>
-
-      <Text style={styles.fullDescription} numberOfLines={2}>
-        {item.description}
-      </Text>
-
-      {renderStars(item.rating || 4)}
-
-      <View style={styles.fullFooter}>
-        <Text style={styles.fullPrice}>₹{item.price}</Text>
-
-        {/* ✅ ONLY BUTTON CLICKABLE */}
+  // 🔥 FIX: Always use full card layout, only use compact when filters are active
+  const renderCard = (item: any) => {
+    if (compactView) {
+      // Compact card (when filters are active)
+      return (
         <TouchableOpacity
-          style={styles.fullAddButton}
+          style={[styles.compactCard, {
+            backgroundColor: colors.card,
+            borderColor: colors.border
+          }]}
+          activeOpacity={0.7}
           onPress={() => {
             setSelectedItem(item);
-            setQuantity(1);
-            setShowItemModal(true);   // ✅ Modal open karega
+            setShowItemModal(true);
           }}
-          activeOpacity={0.8}
         >
-          <Text style={styles.fullAddButtonText}>ADD</Text>
+          <View style={styles.compactImageContainer}>
+            <Image
+              source={{
+                uri: item.image && item.image.startsWith("http")
+                  ? item.image
+                  : "https://via.placeholder.com/150"
+              }}
+              style={styles.compactImage}
+            />
+            <View style={[styles.vegIndicator, { borderColor: colors.success }]}>
+              <View style={[styles.vegDot, { backgroundColor: colors.success }]} />
+            </View>
+          </View>
+
+          <View style={styles.compactContent}>
+            <View style={styles.compactHeader}>
+              <Text style={[styles.compactName, { color: colors.text }]} numberOfLines={1}>{item.name}</Text>
+              <View style={[styles.compactCategoryTag, { backgroundColor: colors.primary + '20' }]}>
+                <Text style={[styles.compactCategoryText, { color: colors.primary }]}>{item.category}</Text>
+              </View>
+            </View>
+
+            <Text style={[styles.compactDescription, { color: colors.subText }]} numberOfLines={2}>
+              {item.description}
+            </Text>
+
+            {renderStars(item.rating || 4)}
+
+            <View style={styles.compactFooter}>
+              <Text style={[styles.compactPrice, { color: colors.primary }]}>₹{item.price}</Text>
+              <TouchableOpacity
+                style={[styles.compactAddButton, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setSelectedItem(item);
+                  setQuantity(1);
+                  addToCart(item);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.compactAddButtonText}>{t('addToCart')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </TouchableOpacity>
+      );
+    } else {
+      // Full card (default view - even with search)
+      return (
+        <TouchableOpacity
+          style={[styles.fullCard, {
+            backgroundColor: colors.card,
+            borderColor: colors.border
+          }]}
+          activeOpacity={0.7}
+          onPress={() => {
+            setSelectedItem(item);
+            setShowItemModal(true);
+          }}
+        >
+          <View style={styles.fullImageContainer}>
+            <Image
+              source={{
+                uri: item.image && item.image.startsWith("http")
+                  ? item.image
+                  : "https://via.placeholder.com/150"
+              }}
+              style={styles.fullImage}
+            />
+            <View style={[styles.vegIndicator, { borderColor: colors.success }]}>
+              <View style={[styles.vegDot, { backgroundColor: colors.success }]} />
+            </View>
+          </View>
 
-      </View>
-    </View>
+          <View style={styles.fullContent}>
+            <View style={styles.fullHeader}>
+              <Text style={[styles.fullName, { color: colors.text }]} numberOfLines={1}>
+                {item.name}
+              </Text>
+              <View style={[styles.fullCategoryTag, { backgroundColor: colors.primary + '20' }]}>
+                <Text style={[styles.fullCategoryText, { color: colors.primary }]}>
+                  {item.category}
+                </Text>
+              </View>
+            </View>
 
-  </View>
-);
+            <Text style={[styles.fullDescription, { color: colors.subText }]} numberOfLines={2}>
+              {item.description}
+            </Text>
+
+            {renderStars(item.rating || 4)}
+
+            <View style={styles.fullFooter}>
+              <Text style={[styles.fullPrice, { color: colors.primary }]}>₹{item.price}</Text>
+
+              <TouchableOpacity
+                style={[styles.fullAddButton, { backgroundColor: colors.primary }]}
+                onPress={() => {
+                  setSelectedItem(item);
+                  setQuantity(1);
+                  setShowItemModal(true);
+                }}
+                activeOpacity={0.8}
+              >
+                <Text style={styles.fullAddButtonText}>{t('addToCart')}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </TouchableOpacity>
+      );
+    }
+  };
+
   return (
     <KeyboardAvoidingView
-      style={styles.container}
+      style={[styles.container, { backgroundColor: colors.background }]}
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <Animated.View
         style={[
           styles.container,
           {
+            backgroundColor: colors.background,
             transform: [{ scale: scaleAnim }, { translateY: slideAnim }]
           }
         ]}
       >
-
-
         {/* ===== SEARCH BAR ===== */}
         <View style={styles.searchSection}>
-          <View style={styles.searchBox}>
-            <Ionicons name="search" size={20} color="#999" style={styles.searchIcon} />
+          <View style={[styles.searchBox, {
+            backgroundColor: colors.card,
+            borderColor: colors.border
+          }]}>
+            <Ionicons name="search" size={20} color={colors.subText} style={styles.searchIcon} />
             <TextInput
-              placeholder="Search food items..."
+              placeholder={t('searchPlaceholder')}
+              placeholderTextColor={colors.subText}
               value={searchQuery}
               onChangeText={(text) => {
                 setSearchQuery(text);
@@ -584,7 +777,7 @@ const updateQuantity = (_id: string, delta: number) => {
                   setShowSuggestions(true);
                 }
               }}
-              style={styles.searchInput}
+              style={[styles.searchInput, { color: colors.text }]}
               onFocus={() => {
                 if (searchQuery.trim()) {
                   setShowSuggestions(true);
@@ -593,7 +786,6 @@ const updateQuantity = (_id: string, delta: number) => {
               onBlur={() => {
                 setTimeout(() => setShowSuggestions(false), 200);
               }}
-              placeholderTextColor="#999"
             />
             {searchQuery.length > 0 && (
               <TouchableOpacity
@@ -603,7 +795,7 @@ const updateQuantity = (_id: string, delta: number) => {
                 }}
                 style={styles.clearButton}
               >
-                <Ionicons name="close-circle" size={20} color="#999" />
+                <Ionicons name="close-circle" size={20} color={colors.subText} />
               </TouchableOpacity>
             )}
           </View>
@@ -614,25 +806,32 @@ const updateQuantity = (_id: string, delta: number) => {
               styles.suggestionsContainer,
               keyboardVisible && styles.suggestionsContainerWithKeyboard,
               {
-                opacity: fadeAnim,
-                transform: [{ translateY: slideAnim }]
+                backgroundColor: colors.card,
+                borderColor: colors.border,
+                opacity: suggestionAnim,
+                transform: [{ translateY: suggestionAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [10, 0]
+                }) }]
               }
             ]}>
-              <View style={styles.suggestionsHeader}>
-                <Text style={styles.suggestionsHeaderText}>
-                  Suggestions for "<Text style={styles.searchTermHighlight}>{searchQuery}</Text>"
+              <View style={[styles.suggestionsHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.suggestionsHeaderText, { color: colors.subText }]}>
+                  {t('suggestionsFor')} "<Text style={{ color: colors.primary }}>{searchQuery}</Text>"
                 </Text>
               </View>
               <ScrollView
                 style={styles.suggestionsScrollView}
                 showsVerticalScrollIndicator={true}
                 nestedScrollEnabled={true}
+                keyboardShouldPersistTaps="handled"
               >
                 {searchSuggestions.map((item, index) => (
                   <TouchableOpacity
                     key={`${item._id}-${index}`}
                     style={[
                       styles.suggestionItem,
+                      { borderBottomColor: colors.border },
                       index === searchSuggestions.length - 1 && styles.suggestionItemLast
                     ]}
                     onPress={() => handleSearchItemSelect(item)}
@@ -660,22 +859,24 @@ const updateQuantity = (_id: string, delta: number) => {
                       <HighlightText
                         text={item.name}
                         searchTerm={searchQuery}
-                        style={styles.suggestionItemName}
+                        style={[styles.suggestionItemName, { color: colors.text }]}
+                        colors={colors}
                       />
                       <HighlightText
                         text={item.category}
                         searchTerm={searchQuery}
-                        style={styles.suggestionItemCategory}
+                        style={[styles.suggestionItemCategory, { color: colors.subText }]}
+                        colors={colors}
                       />
                       <View style={styles.suggestionItemRating}>
                         <Ionicons name="star" size={12} color="#FFD700" />
-                        <Text style={styles.suggestionItemRatingText}>
+                        <Text style={[styles.suggestionItemRatingText, { color: colors.text }]}>
                           {(item.rating || 4).toFixed(1)}
                         </Text>
                       </View>
                     </View>
-                    <View style={styles.suggestionItemPriceContainer}>
-                      <Text style={styles.suggestionItemPrice}>₹{item.price}</Text>
+                    <View style={[styles.suggestionItemPriceContainer, { backgroundColor: colors.primary + '20' }]}>
+                      <Text style={[styles.suggestionItemPrice, { color: colors.primary }]}>₹{item.price}</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -685,15 +886,26 @@ const updateQuantity = (_id: string, delta: number) => {
         </View>
 
         {/* ===== FILTERS BAR ===== */}
-        <View style={styles.filtersBar}>
+        <View style={[styles.filtersBar, {
+          backgroundColor: colors.card,
+          borderBottomColor: colors.border
+        }]}>
           <TouchableOpacity
-            style={[styles.filterButton, compactView && styles.filterButtonActive]}
+            style={[
+              styles.filterButton,
+              { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' },
+              compactView && [styles.filterButtonActive, { borderColor: colors.primary }]
+            ]}
             onPress={() => setShowFiltersModal(true)}
             activeOpacity={0.7}
           >
-            <Ionicons name="filter" size={16} color={compactView ? Colors.primary : Colors.textBody} />
-            <Text style={[styles.filterButtonText, compactView && styles.filterButtonTextActive]}>
-              Filters {compactView && `• Applied`}
+            <Ionicons name="filter" size={16} color={compactView ? colors.primary : colors.subText} />
+            <Text style={[
+              styles.filterButtonText,
+              { color: colors.subText },
+              compactView && [styles.filterButtonTextActive, { color: colors.primary }]
+            ]}>
+              {t('filters')} {compactView && `• ${t('filtersApplied').split('•')[1]}`}
             </Text>
           </TouchableOpacity>
 
@@ -706,17 +918,19 @@ const updateQuantity = (_id: string, delta: number) => {
             <TouchableOpacity
               style={[
                 styles.quickFilter,
-                ratingFilter === '4.5+' && styles.quickFilterActive
+                { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' },
+                ratingFilter === '4.5+' && [styles.quickFilterActive, { borderColor: colors.primary }]
               ]}
               onPress={() => {
                 setRatingFilter(ratingFilter === '4.5+' ? 'all' : '4.5+');
               }}
               activeOpacity={0.6}
             >
-              <Ionicons name="star" size={14} color={ratingFilter === '4.5+' ? Colors.primary : Colors.textBody} />
+              <Ionicons name="star" size={14} color={ratingFilter === '4.5+' ? colors.primary : colors.subText} />
               <Text style={[
                 styles.quickFilterText,
-                ratingFilter === '4.5+' && styles.quickFilterTextActive
+                { color: colors.subText },
+                ratingFilter === '4.5+' && [styles.quickFilterTextActive, { color: colors.primary }]
               ]}>
                 4.5+
               </Text>
@@ -725,7 +939,8 @@ const updateQuantity = (_id: string, delta: number) => {
             <TouchableOpacity
               style={[
                 styles.quickFilter,
-                priceFilter === 'under-100' && styles.quickFilterActive
+                { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' },
+                priceFilter === 'under-100' && [styles.quickFilterActive, { borderColor: colors.primary }]
               ]}
               onPress={() => {
                 setPriceFilter(priceFilter === 'under-100' ? 'all' : 'under-100');
@@ -734,16 +949,18 @@ const updateQuantity = (_id: string, delta: number) => {
             >
               <Text style={[
                 styles.quickFilterText,
-                priceFilter === 'under-100' && styles.quickFilterTextActive
+                { color: colors.subText },
+                priceFilter === 'under-100' && [styles.quickFilterTextActive, { color: colors.primary }]
               ]}>
-                Under ₹100
+                {t('under100')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.quickFilter,
-                sortBy === 'price-low' && styles.quickFilterActive
+                { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' },
+                sortBy === 'price-low' && [styles.quickFilterActive, { borderColor: colors.primary }]
               ]}
               onPress={() => {
                 setSortBy(sortBy === 'price-low' ? 'relevance' : 'price-low');
@@ -752,75 +969,97 @@ const updateQuantity = (_id: string, delta: number) => {
             >
               <Text style={[
                 styles.quickFilterText,
-                sortBy === 'price-low' && styles.quickFilterTextActive
+                { color: colors.subText },
+                sortBy === 'price-low' && [styles.quickFilterTextActive, { color: colors.primary }]
               ]}>
-                ₹ Low to High
+                {t('quickFilters.lowToHigh')}
               </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
               style={[
                 styles.quickFilter,
-                sortBy === 'rating' && styles.quickFilterActive
+                { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' },
+                sortBy === 'rating' && [styles.quickFilterActive, { borderColor: colors.primary }]
               ]}
               onPress={() => {
                 setSortBy(sortBy === 'rating' ? 'relevance' : 'rating');
               }}
               activeOpacity={0.6}
             >
-              <Ionicons name="trending-up" size={14} color={sortBy === 'rating' ? Colors.primary : Colors.textBody} />
+              <Ionicons name="trending-up" size={14} color={sortBy === 'rating' ? colors.primary : colors.subText} />
               <Text style={[
                 styles.quickFilterText,
-                sortBy === 'rating' && styles.quickFilterTextActive
+                { color: colors.subText },
+                sortBy === 'rating' && [styles.quickFilterTextActive, { color: colors.primary }]
               ]}>
-                Top Rated
+                {t('quickFilters.topRated')}
               </Text>
             </TouchableOpacity>
           </ScrollView>
         </View>
 
         {/* ===== MAIN CONTENT ===== */}
-
         {loading ? (
-          <View style={{ flex: 1, justifyContent: "center", alignItems: "center" }}>
-            <ActivityIndicator size="large" color={Colors.primary} />
-            <Text style={{ marginTop: 10 }}>Loading menu...</Text>
-          </View>
+          <Animated.View
+            style={{
+              flex: 1,
+              justifyContent: "center",
+              alignItems: "center",
+              opacity: fadeAnim,
+              transform: [{ scale: scaleAnim }]
+            }}
+          >
+            <Animated.View
+              style={{
+                transform: [
+                  {
+                    rotate: rotateAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ["0deg", "360deg"],
+                    }),
+                  },
+                ],
+              }}
+            >
+              <Ionicons name="restaurant" size={60} color={colors.primary} />
+            </Animated.View>
+
+            <Text style={{ marginTop: 16, fontSize: 16, color: colors.text }}>
+              {t('loading')}
+            </Text>
+          </Animated.View>
 
         ) : itemsToDisplay.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <Ionicons name="fast-food-outline" size={80} color="#DDD" />
-            <Text style={styles.emptyText}>No items found</Text>
+            <Ionicons name="fast-food-outline" size={80} color={colors.border} />
+            <Text style={[styles.emptyText, { color: colors.subText }]}>{t('noItemsFound')}</Text>
             <TouchableOpacity
-              style={styles.resetAllButton}
+              style={[styles.resetAllButton, { backgroundColor: colors.primary }]}
               onPress={resetFilters}
             >
-              <Text style={styles.resetAllButtonText}>Reset All Filters</Text>
+              <Text style={styles.resetAllButtonText}>{t('resetAllFilters')}</Text>
             </TouchableOpacity>
           </View>
         ) : (
-          compactView ? (
-            <FlatList
-              key="compact-list"
-              data={itemsToDisplay}
-              keyExtractor={(item) => item._id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.compactMenuList}
-              numColumns={2}
-              renderItem={({ item }) => renderCompactCard(item)}
-            />
-          ) : (
-            <FlatList
-              key="full-list"
-              data={itemsToDisplay}
-              keyExtractor={(item) => item._id}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={styles.fullMenuList}
-              numColumns={1}
-              renderItem={({ item }) => renderFullCard(item)}
-            />
-          )
-        )}
+          // 🔥 FIX: Always use numColumns={1} for full cards, numColumns={2} for compact
+          <FlatList
+            data={itemsToDisplay}
+            key={compactView ? "compact" : "full"}
+            keyExtractor={(item) => item._id}
+            renderItem={({ item }) => renderCard(item)}
+            numColumns={compactView ? 2 : 1}
+            showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
+            contentContainerStyle={
+              compactView ? styles.compactMenuList : styles.fullMenuList
+            }
+            initialNumToRender={6}
+            maxToRenderPerBatch={6}
+            windowSize={10}
+            removeClippedSubviews={true}
+          />)}
+
         {/* ===== FILTERS MODAL ===== */}
         <Modal
           transparent
@@ -839,17 +1078,18 @@ const updateQuantity = (_id: string, delta: number) => {
               style={[
                 styles.filtersModalContent,
                 {
+                  backgroundColor: colors.card,
                   transform: [{ translateY: filterSlideAnim }]
                 }
               ]}
             >
-              <View style={styles.filtersModalHeader}>
-                <Text style={styles.filtersModalTitle}>Filters</Text>
+              <View style={[styles.filtersModalHeader, { borderBottomColor: colors.border }]}>
+                <Text style={[styles.filtersModalTitle, { color: colors.text }]}>{t('filters')}</Text>
                 <TouchableOpacity
                   onPress={() => setShowFiltersModal(false)}
                   style={styles.filtersModalCloseButton}
                 >
-                  <Ionicons name="close" size={24} color={Colors.textDark} />
+                  <Ionicons name="close" size={24} color={colors.text} />
                 </TouchableOpacity>
               </View>
 
@@ -859,30 +1099,35 @@ const updateQuantity = (_id: string, delta: number) => {
               >
                 {/* Sort By Section */}
                 <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>Sort By</Text>
+                  <Text style={[styles.filterSectionTitle, { color: colors.text }]}>{t('sortBy')}</Text>
                   <View style={styles.filterOptions}>
                     {(['relevance', 'price-low', 'price-high', 'rating', 'name'] as SortOption[]).map((option) => (
                       <TouchableOpacity
                         key={option}
                         style={[
                           styles.filterOption,
-                          sortBy === option && styles.filterOptionActive
+                          {
+                            backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8',
+                            borderColor: colors.border
+                          },
+                          sortBy === option && [styles.filterOptionActive, { borderColor: colors.primary }]
                         ]}
                         onPress={() => setSortBy(option)}
                         activeOpacity={0.7}
                       >
                         <Text style={[
                           styles.filterOptionText,
-                          sortBy === option && styles.filterOptionTextActive
+                          { color: colors.subText },
+                          sortBy === option && [styles.filterOptionTextActive, { color: colors.primary }]
                         ]}>
-                          {option === 'relevance' && 'Relevance'}
-                          {option === 'price-low' && 'Price: Low to High'}
-                          {option === 'price-high' && 'Price: High to Low'}
-                          {option === 'rating' && 'Rating'}
-                          {option === 'name' && 'Name'}
+                          {option === 'relevance' && t('relevance')}
+                          {option === 'price-low' && t('priceLowHigh')}
+                          {option === 'price-high' && t('priceHighLow')}
+                          {option === 'rating' && t('rating')}
+                          {option === 'name' && t('name')}
                         </Text>
                         {sortBy === option && (
-                          <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                          <Ionicons name="checkmark" size={20} color={colors.primary} />
                         )}
                       </TouchableOpacity>
                     ))}
@@ -891,29 +1136,34 @@ const updateQuantity = (_id: string, delta: number) => {
 
                 {/* Rating Filter Section */}
                 <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>Minimum Rating</Text>
+                  <Text style={[styles.filterSectionTitle, { color: colors.text }]}>{t('minimumRating')}</Text>
                   <View style={styles.filterOptions}>
                     {(['all', '3.5+', '4.0+', '4.5+'] as RatingFilter[]).map((option) => (
                       <TouchableOpacity
                         key={option}
                         style={[
                           styles.filterOption,
-                          ratingFilter === option && styles.filterOptionActive
+                          {
+                            backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8',
+                            borderColor: colors.border
+                          },
+                          ratingFilter === option && [styles.filterOptionActive, { borderColor: colors.primary }]
                         ]}
                         onPress={() => setRatingFilter(option)}
                         activeOpacity={0.7}
                       >
                         <Text style={[
                           styles.filterOptionText,
-                          ratingFilter === option && styles.filterOptionTextActive
+                          { color: colors.subText },
+                          ratingFilter === option && [styles.filterOptionTextActive, { color: colors.primary }]
                         ]}>
-                          {option === 'all' && 'All Ratings'}
-                          {option === '3.5+' && '3.5+ Stars'}
-                          {option === '4.0+' && '4.0+ Stars'}
-                          {option === '4.5+' && '4.5+ Stars'}
+                          {option === 'all' && t('allRatings')}
+                          {option === '3.5+' && t('stars35')}
+                          {option === '4.0+' && t('stars40')}
+                          {option === '4.5+' && t('stars45')}
                         </Text>
                         {ratingFilter === option && (
-                          <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                          <Ionicons name="checkmark" size={20} color={colors.primary} />
                         )}
                       </TouchableOpacity>
                     ))}
@@ -922,29 +1172,34 @@ const updateQuantity = (_id: string, delta: number) => {
 
                 {/* Price Filter Section */}
                 <View style={styles.filterSection}>
-                  <Text style={styles.filterSectionTitle}>Price Range</Text>
+                  <Text style={[styles.filterSectionTitle, { color: colors.text }]}>{t('priceRange')}</Text>
                   <View style={styles.filterOptions}>
                     {(['all', 'under-100', '100-200', '200+'] as PriceFilter[]).map((option) => (
                       <TouchableOpacity
                         key={option}
                         style={[
                           styles.filterOption,
-                          priceFilter === option && styles.filterOptionActive
+                          {
+                            backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8',
+                            borderColor: colors.border
+                          },
+                          priceFilter === option && [styles.filterOptionActive, { borderColor: colors.primary }]
                         ]}
                         onPress={() => setPriceFilter(option)}
                         activeOpacity={0.7}
                       >
                         <Text style={[
                           styles.filterOptionText,
-                          priceFilter === option && styles.filterOptionTextActive
+                          { color: colors.subText },
+                          priceFilter === option && [styles.filterOptionTextActive, { color: colors.primary }]
                         ]}>
-                          {option === 'all' && 'All Prices'}
-                          {option === 'under-100' && 'Under ₹100'}
-                          {option === '100-200' && '₹100 - ₹200'}
-                          {option === '200+' && 'Above ₹200'}
+                          {option === 'all' && t('allPrices')}
+                          {option === 'under-100' && t('under100')}
+                          {option === '100-200' && t('between100200')}
+                          {option === '200+' && t('above200')}
                         </Text>
                         {priceFilter === option && (
-                          <Ionicons name="checkmark" size={20} color={Colors.primary} />
+                          <Ionicons name="checkmark" size={20} color={colors.primary} />
                         )}
                       </TouchableOpacity>
                     ))}
@@ -952,24 +1207,30 @@ const updateQuantity = (_id: string, delta: number) => {
                 </View>
               </ScrollView>
 
-              <View style={styles.filtersModalFooter}>
+              <View style={[styles.filtersModalFooter, { borderTopColor: colors.border }]}>
                 <TouchableOpacity
-                  style={styles.resetFiltersButton}
+                  style={[
+                    styles.resetFiltersButton,
+                    {
+                      backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8',
+                      borderColor: colors.border
+                    }
+                  ]}
                   onPress={() => {
                     resetFilters();
                     setShowFiltersModal(false);
                   }}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.resetFiltersButtonText}>Reset All</Text>
+                  <Text style={[styles.resetFiltersButtonText, { color: colors.subText }]}>{t('resetAll')}</Text>
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.applyFiltersButton}
+                  style={[styles.applyFiltersButton, { backgroundColor: colors.primary }]}
                   onPress={() => setShowFiltersModal(false)}
                   activeOpacity={0.7}
                 >
-                  <Text style={styles.applyFiltersButtonText}>Apply Filters</Text>
+                  <Text style={styles.applyFiltersButtonText}>{t('applyFilters')}</Text>
                 </TouchableOpacity>
               </View>
             </Animated.View>
@@ -997,6 +1258,7 @@ const updateQuantity = (_id: string, delta: number) => {
                 style={[
                   styles.modalContent,
                   {
+                    backgroundColor: colors.card,
                     transform: [{ translateY: slideAnim }]
                   }
                 ]}
@@ -1014,8 +1276,8 @@ const updateQuantity = (_id: string, delta: number) => {
 
                 <View style={styles.modalHeader}>
                   <View>
-                    <Text style={styles.modalItemName}>{selectedItem.name}</Text>
-                    <Text style={styles.modalItemDescription}>{selectedItem.description}</Text>
+                    <Text style={[styles.modalItemName, { color: colors.text }]}>{selectedItem.name}</Text>
+                    <Text style={[styles.modalItemDescription, { color: colors.subText }]}>{selectedItem.description}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.modalCloseButton}
@@ -1024,47 +1286,47 @@ const updateQuantity = (_id: string, delta: number) => {
                       setSelectedItem(null);
                     }}
                   >
-                    <Ionicons name="close" size={24} color={Colors.textDark} />
+                    <Ionicons name="close" size={24} color={colors.text} />
                   </TouchableOpacity>
                 </View>
 
                 <View style={styles.modalInfo}>
                   <View style={styles.modalRating}>
                     {renderStars(selectedItem.rating)}
-                    <Text style={styles.modalRatingText}>
+                    <Text style={[styles.modalRatingText, { color: colors.text }]}>
                       {(selectedItem.rating || 4).toFixed(1)}
                     </Text>
                   </View>
 
-                  <Text style={styles.modalCategory}>
-                    Category: <Text style={styles.modalCategoryText}>{selectedItem.category}</Text>
+                  <Text style={[styles.modalCategory, { color: colors.subText }]}>
+                    {t('category')}: <Text style={[styles.modalCategoryText, { color: colors.primary }]}>{selectedItem.category}</Text>
                   </Text>
                 </View>
 
                 <View style={styles.modalActions}>
-                  <View style={styles.quantitySelector}>
+                  <View style={[styles.quantitySelector, { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' }]}>
                     <TouchableOpacity
                       style={styles.quantityButton}
                       onPress={() => setQuantity(Math.max(1, quantity - 1))}
                     >
-                      <Ionicons name="remove" size={20} color={Colors.textDark} />
+                      <Ionicons name="remove" size={20} color={colors.text} />
                     </TouchableOpacity>
-                    <Text style={styles.quantityText}>{quantity}</Text>
+                    <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
                     <TouchableOpacity
                       style={styles.quantityButton}
                       onPress={() => setQuantity(quantity + 1)}
                     >
-                      <Ionicons name="add" size={20} color={Colors.textDark} />
+                      <Ionicons name="add" size={20} color={colors.text} />
                     </TouchableOpacity>
                   </View>
 
                   <TouchableOpacity
-                    style={styles.addToCartButton}
+                    style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                     onPress={() => addToCart(selectedItem)}
                   >
                     <Ionicons name="cart" size={20} color="#FFFFFF" />
                     <Text style={styles.addToCartButtonText}>
-                      Add to Cart • {selectedItem.price}
+                      {t('itemModal.addToCart')} • ₹{selectedItem.price}
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1072,62 +1334,15 @@ const updateQuantity = (_id: string, delta: number) => {
             </Animated.View>
           </Modal>
         )}
-        
       </Animated.View>
     </KeyboardAvoidingView>
   );
 }
 
-/* ================= UPDATED STYLES ================= */
+/* ================= STYLES ================= */
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.bgMain,
-  },
-
-  // Header
-  header: {
-    paddingTop: 60,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-  },
-  headerTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Colors.textDark,
-    marginBottom: 4,
-  },
-  headerSubtitle: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  totalItemsText: {
-    fontSize: 14,
-    color: Colors.textBody,
-    fontWeight: '500',
-  },
-  clearFiltersHeaderButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary + '10',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 12,
-    gap: 4,
-  },
-  clearFiltersHeaderText: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '500',
   },
 
   // Search Section
@@ -1143,7 +1358,6 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
@@ -1153,7 +1367,6 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
   searchIcon: {
     marginRight: 12,
@@ -1161,7 +1374,6 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: Colors.textDark,
     padding: 0,
   },
   clearButton: {
@@ -1175,7 +1387,6 @@ const styles = StyleSheet.create({
     top: '100%',
     left: 20,
     right: 20,
-    backgroundColor: '#FFF',
     borderRadius: 12,
     marginTop: 8,
     shadowColor: '#000',
@@ -1185,7 +1396,6 @@ const styles = StyleSheet.create({
     elevation: 8,
     zIndex: 1001,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
     maxHeight: 350,
   },
   suggestionsContainerWithKeyboard: {
@@ -1196,18 +1406,15 @@ const styles = StyleSheet.create({
     paddingTop: 12,
     paddingBottom: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
     backgroundColor: '#FAFAFA',
     borderTopLeftRadius: 12,
     borderTopRightRadius: 12,
   },
   suggestionsHeaderText: {
     fontSize: 14,
-    color: Colors.textBody,
     fontWeight: '500',
   },
   searchTermHighlight: {
-    color: Colors.primary,
     fontWeight: '700',
   },
   suggestionsScrollView: {
@@ -1220,7 +1427,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
     backgroundColor: '#FFF',
   },
   suggestionItemLast: {
@@ -1248,12 +1454,10 @@ const styles = StyleSheet.create({
   suggestionItemName: {
     fontSize: 15,
     fontWeight: '600',
-    color: Colors.textDark,
     marginBottom: 2,
   },
   suggestionItemCategory: {
     fontSize: 12,
-    color: Colors.textBody,
     marginBottom: 4,
   },
   suggestionItemRating: {
@@ -1262,12 +1466,10 @@ const styles = StyleSheet.create({
   },
   suggestionItemRatingText: {
     fontSize: 11,
-    color: Colors.textDark,
     marginLeft: 4,
     fontWeight: '600',
   },
   suggestionItemPriceContainer: {
-    backgroundColor: Colors.primary + '15',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -1275,18 +1477,15 @@ const styles = StyleSheet.create({
   suggestionItemPrice: {
     fontSize: 14,
     fontWeight: '700',
-    color: Colors.primary,
   },
 
   // Filters Bar
   filtersBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFF',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -1296,7 +1495,6 @@ const styles = StyleSheet.create({
   filterButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
@@ -1304,18 +1502,14 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   filterButtonActive: {
-    backgroundColor: Colors.primary + '15',
-    borderColor: Colors.primary,
     borderWidth: 1,
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: '500',
-    color: Colors.textBody,
     marginLeft: 6,
   },
   filterButtonTextActive: {
-    color: Colors.primary,
     fontWeight: '600',
   },
   quickFiltersContainer: {
@@ -1328,31 +1522,20 @@ const styles = StyleSheet.create({
   quickFilter: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 20,
     gap: 4,
   },
   quickFilterActive: {
-    backgroundColor: Colors.primary + '15',
-    borderColor: Colors.primary,
     borderWidth: 1,
   },
   quickFilterText: {
     fontSize: 13,
-    color: Colors.textBody,
     fontWeight: '500',
   },
   quickFilterTextActive: {
-    color: Colors.primary,
     fontWeight: '600',
-  },
-
-  // Main Content
-  mainContent: {
-    flex: 1,
-    backgroundColor: '#FFF',
   },
 
   // Menu List
@@ -1367,19 +1550,9 @@ const styles = StyleSheet.create({
     paddingBottom: 100,
   },
 
-  // Item Containers
-  fullItemContainer: {
-    marginBottom: 12,
-  },
-  compactItemContainer: {
-    flex: 1,
-    margin: 6,
-  },
-
-  // FULL CARD STYLES (No filters active)
+  // FULL CARD STYLES
   fullCard: {
     flexDirection: 'row',
-    backgroundColor: '#FFF',
     borderRadius: 12,
     padding: 12,
     shadowColor: '#000',
@@ -1388,7 +1561,7 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#F5F5F5',
+    marginBottom: 12,
   },
   fullImageContainer: {
     position: 'relative',
@@ -1412,24 +1585,20 @@ const styles = StyleSheet.create({
   fullName: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textDark,
     flex: 1,
     marginRight: 8,
   },
   fullCategoryTag: {
-    backgroundColor: Colors.primary + '15',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
   },
   fullCategoryText: {
     fontSize: 11,
-    color: Colors.primary,
     fontWeight: '600',
   },
   fullDescription: {
     fontSize: 13,
-    color: Colors.textBody,
     marginBottom: 8,
     lineHeight: 18,
   },
@@ -1442,7 +1611,6 @@ const styles = StyleSheet.create({
     marginLeft: 6,
     fontSize: 13,
     fontWeight: '600',
-    color: Colors.textDark,
   },
   fullFooter: {
     flexDirection: 'row',
@@ -1452,10 +1620,8 @@ const styles = StyleSheet.create({
   fullPrice: {
     fontSize: 18,
     fontWeight: '700',
-    color: Colors.primary,
   },
   fullAddButton: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 8,
     borderRadius: 6,
@@ -1466,9 +1632,10 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
 
-  // COMPACT CARD STYLES (When filters are active)
+  // COMPACT CARD STYLES
   compactCard: {
-    backgroundColor: '#FFF',
+    flex: 1,
+    margin: 6,
     borderRadius: 10,
     padding: 10,
     shadowColor: '#000',
@@ -1477,7 +1644,6 @@ const styles = StyleSheet.create({
     shadowRadius: 3,
     elevation: 2,
     borderWidth: 1,
-    borderColor: '#F5F5F5',
     height: 250,
   },
   compactImageContainer: {
@@ -1502,24 +1668,20 @@ const styles = StyleSheet.create({
   compactName: {
     fontSize: 14,
     fontWeight: '600',
-    color: Colors.textDark,
     flex: 1,
     marginRight: 6,
   },
   compactCategoryTag: {
-    backgroundColor: Colors.primary + '15',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
   },
   compactCategoryText: {
     fontSize: 10,
-    color: Colors.primary,
     fontWeight: '600',
   },
   compactDescription: {
     fontSize: 11,
-    color: Colors.textBody,
     marginBottom: 6,
     lineHeight: 14,
     height: 28,
@@ -1533,10 +1695,8 @@ const styles = StyleSheet.create({
   compactPrice: {
     fontSize: 16,
     fontWeight: '700',
-    color: Colors.primary,
   },
   compactAddButton: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 6,
@@ -1547,7 +1707,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
   },
 
-  // Veg Indicator (Common for both)
+  // Veg Indicator
   vegIndicator: {
     position: 'absolute',
     top: 6,
@@ -1556,7 +1716,6 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.success,
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: '#FFF',
@@ -1565,7 +1724,6 @@ const styles = StyleSheet.create({
     width: 6,
     height: 6,
     borderRadius: 3,
-    backgroundColor: Colors.success,
   },
 
   // Empty State
@@ -1578,12 +1736,10 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 18,
-    color: Colors.textBody,
     marginTop: 16,
     marginBottom: 24,
   },
   resetAllButton: {
-    backgroundColor: Colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -1597,11 +1753,10 @@ const styles = StyleSheet.create({
   // Filters Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'transparent',
     justifyContent: 'flex-end',
   },
   filtersModalContent: {
-    backgroundColor: '#FFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     maxHeight: height * 0.7,
@@ -1613,12 +1768,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#F0F0F0',
   },
   filtersModalTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: Colors.textDark,
   },
   filtersModalCloseButton: {
     padding: 4,
@@ -1634,7 +1787,6 @@ const styles = StyleSheet.create({
   filterSectionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textDark,
     marginBottom: 12,
   },
   filterOptions: {
@@ -1644,24 +1796,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
   filterOptionActive: {
-    backgroundColor: Colors.primary + '10',
-    borderColor: Colors.primary,
+    borderWidth: 1,
   },
   filterOptionText: {
     fontSize: 14,
-    color: Colors.textBody,
     fontWeight: '500',
   },
   filterOptionTextActive: {
-    color: Colors.primary,
     fontWeight: '600',
   },
   filtersModalFooter: {
@@ -1669,26 +1816,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#F0F0F0',
     gap: 12,
   },
   resetFiltersButton: {
     flex: 1,
-    backgroundColor: '#F8F8F8',
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#F0F0F0',
   },
   resetFiltersButtonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textBody,
   },
   applyFiltersButton: {
     flex: 2,
-    backgroundColor: Colors.primary,
     paddingVertical: 14,
     borderRadius: 12,
     alignItems: 'center',
@@ -1701,7 +1843,6 @@ const styles = StyleSheet.create({
 
   // Item Modal Styles
   modalContent: {
-    backgroundColor: '#FFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
@@ -1722,12 +1863,10 @@ const styles = StyleSheet.create({
   modalItemName: {
     fontSize: 22,
     fontWeight: '700',
-    color: Colors.textDark,
     marginBottom: 8,
   },
   modalItemDescription: {
     fontSize: 15,
-    color: Colors.textBody,
     lineHeight: 20,
   },
   modalCloseButton: {
@@ -1744,15 +1883,12 @@ const styles = StyleSheet.create({
   modalRatingText: {
     fontSize: 16,
     fontWeight: '600',
-    color: Colors.textDark,
     marginLeft: 8,
   },
   modalCategory: {
     fontSize: 14,
-    color: Colors.textBody,
   },
   modalCategoryText: {
-    color: Colors.primary,
     fontWeight: '600',
   },
   modalActions: {
@@ -1763,7 +1899,6 @@ const styles = StyleSheet.create({
   quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F8F8F8',
     borderRadius: 8,
     padding: 8,
   },
@@ -1774,7 +1909,6 @@ const styles = StyleSheet.create({
   quantityText: {
     fontSize: 18,
     fontWeight: '600',
-    color: Colors.textDark,
     paddingHorizontal: 16,
   },
   addToCartButton: {
@@ -1782,7 +1916,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
     paddingVertical: 16,
     borderRadius: 8,
     marginLeft: 12,
