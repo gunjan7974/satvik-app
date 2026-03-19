@@ -2,6 +2,10 @@ import { Tabs, useRouter, useSegments } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
+import axios from "axios";
+import { BASE_URL } from "@/config/api";
+import { DeviceEventEmitter } from "react-native";
+import { CART_UPDATED_EVENT } from "@/constants/CartEventEmitter";
 import {
   View,
   Text,
@@ -24,7 +28,6 @@ import { useAuth } from "../data/AuthContext";
 const { width, height } = Dimensions.get("window");
 
 // Local image import
-const GUNJAN_IMAGE = require("../../assets/images/gunjan.png");
 
 // 🔥 TRANSLATIONS FOR 5 LANGUAGES
 const translations: Record<string, any> = {
@@ -187,13 +190,13 @@ const translations: Record<string, any> = {
 
 export default function TabLayout() {
   const { colors, mode } = useTheme();
-  const { isLoggedIn } = useAuth();
+  const { user: authUser, isGuest } = useAuth();
 
   // 🔥 Language state
   const [language, setLanguage] = useState("en");
   const [user, setUser] = useState({
     name: "Satvik Kaleva",
-    email: "satvik@kalewa.com",
+    email: "",
   });
 
   const [avatar, setAvatar] = useState<string | null>(null);
@@ -207,6 +210,54 @@ export default function TabLayout() {
   const segments = useSegments();
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartCount, setCartCount] = useState(0);
+  const [orderCount, setOrderCount] = useState(0);
+
+  const loadCartCount = async () => {
+    try {
+      const count = await AsyncStorage.getItem("cartCount");
+
+      if (count) {
+        setCartCount(JSON.parse(count));
+      } else {
+        setCartCount(0);
+      }
+
+    } catch (error) {
+      console.log("Cart count load error:", error);
+    }
+  };
+
+  // 🔥 LIVE cart badge: subscribe to in-process updates from any screen
+  useEffect(() => {
+    const subscription = DeviceEventEmitter.addListener(
+      CART_UPDATED_EVENT,
+      (newCount: number) => setCartCount(newCount)
+    );
+    return () => subscription.remove();
+  }, []);
+
+const loadOrderCount = async () => {
+  try {
+    const token = await AsyncStorage.getItem("token");
+
+    if (!token) {
+      setOrderCount(0);
+      return;
+    }
+
+    const res = await axios.get(`${BASE_URL}/api/orders/my-orders`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    setOrderCount(res.data.length);
+
+  } catch (error) {
+    console.log("Order count error:", error);
+  }
+};
+
 
   const loadUser = async () => {
     try {
@@ -227,6 +278,14 @@ export default function TabLayout() {
     }
   };
 
+  // Get initials from name
+  const getInitials = (name: string) => {
+    if (!name) return "?";
+    const words = name.split(" ");
+    if (words.length === 1) return words[0].charAt(0).toUpperCase();
+    return (words[0].charAt(0) + words[words.length - 1].charAt(0)).toUpperCase();
+  };
+
   // 🔥 Load language and update user info
   const loadLanguage = async () => {
     try {
@@ -235,12 +294,6 @@ export default function TabLayout() {
 
       if (savedLang && translations[savedLang]) {
         setLanguage(savedLang);
-
-        // Update user info with translated values
-        setUser({
-          name: translations[savedLang]?.userName || translations.en.userName,
-          email: translations[savedLang]?.userEmail || translations.en.userEmail,
-        });
       }
     } catch (error) {
       console.log("Error loading language:", error);
@@ -252,11 +305,13 @@ export default function TabLayout() {
     loadLanguage();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      loadUser();
-    }, [segments])
-  );
+ useFocusEffect(
+  useCallback(() => {
+    loadUser();
+    loadCartCount();
+    loadOrderCount();   // ⭐ add this
+  }, [segments])
+);
 
   useEffect(() => {
     loadLanguage();
@@ -270,7 +325,7 @@ export default function TabLayout() {
   // Get current active route for highlighting
   const getActiveRoute = () => {
     const currentSegment = segments[segments.length - 1];
-    return currentSegment || "index";
+    return (currentSegment || "index") as string;
   };
 
   // Get header title based on current route
@@ -332,17 +387,38 @@ export default function TabLayout() {
     router.push("/auth/login");
   };
 
-  const handleLogout = () => {
-    setMenuOpen(false);
-    // Add your logout logic here
-    console.log("User logged out");
-    router.replace("../auth/login");
+  const handleLogout = async () => {
+    try {
+      setMenuOpen(false);
+
+      // token delete
+      await AsyncStorage.removeItem("token");
+      await AsyncStorage.removeItem("cartCount");
+
+      // ⭐ guest user create
+      const guestUser = {
+        _id: "guest_user",
+        name: "Guest User",
+        email: "",
+        isGuest: true,
+        avatar: null
+      };
+
+      // guest user save
+      await AsyncStorage.setItem("userInfo", JSON.stringify(guestUser));
+
+      // home page open
+      router.replace("/");
+
+    } catch (error) {
+      console.log("Logout error:", error);
+    }
   };
 
   // Navigation helper function
   const navigateTo = (path: string) => {
     setMenuOpen(false);
-    router.push(path);
+    router.push(path as any);
   };
 
   // Check if route is active
@@ -376,18 +452,20 @@ export default function TabLayout() {
             {/* Header with Profile */}
             <View style={[styles.headerContainer, { backgroundColor: colors.primary }]}>
               <View style={styles.profileSection}>
-                <Image
-                  source={
-                    avatar
-                      ? { uri: avatar }
-                      : GUNJAN_IMAGE
-                  }
-                  key={avatar}   // ⭐ यही main fix है
-                  style={styles.profileImage}
-                />
+                {avatar ? (
+                  <Image
+                    source={{ uri: avatar }}
+                    key={avatar}
+                    style={styles.profileImage}
+                  />
+                ) : (
+                  <View style={styles.initialsAvatar}>
+                    <Text style={styles.initialsText}>{isGuest ? "G" : getInitials(user.name)}</Text>
+                  </View>
+                )}
                 <View style={styles.userInfo}>
-                  <Text style={styles.userName}>{user.name}</Text>
-                  <Text style={styles.userEmail}>{user.email}</Text>
+                  <Text style={styles.userName}>{isGuest ? "Guest User" : user.name}</Text>
+                  <Text style={styles.userEmail}>{isGuest ? "Welcome to Satvik Kaleva" : user.email}</Text>
                 </View>
               </View>
 
@@ -436,7 +514,7 @@ export default function TabLayout() {
                 title={t("myOrders")}
                 onPress={() => navigateTo("/order")}
                 active={isActive("order")}
-                badge={3}
+                badge={orderCount}
                 colors={colors}
                 mode={mode}
               />
@@ -519,11 +597,7 @@ export default function TabLayout() {
           headerLeft: () => (
             <TouchableOpacity
               onPress={() => {
-                if (!isLoggedIn) {
-                  router.push("/auth/login");
-                } else {
-                  setMenuOpen(true);
-                }
+                setMenuOpen(true);
               }}
               style={styles.menuButton}
             >
@@ -633,14 +707,7 @@ export default function TabLayout() {
               </View>
             ),
           }}
-          listeners={{
-            tabPress: (e) => {
-              if (!isLoggedIn) {
-                e.preventDefault();
-                router.push("/auth/login");
-              }
-            },
-          }}
+         
         />
 
         {/* HIDDEN SCREENS */}
@@ -797,6 +864,22 @@ const styles = StyleSheet.create({
     borderColor: '#fff',
     marginRight: 15,
     backgroundColor: '#F5F5F5',
+  },
+  initialsAvatar: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    borderWidth: 3,
+    borderColor: '#fff',
+    marginRight: 15,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#FFF3E0',
+  },
+  initialsText: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#FF8A00',
   },
   userInfo: {
     flex: 1,

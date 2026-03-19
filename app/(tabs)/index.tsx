@@ -13,6 +13,7 @@ import {
   Easing,
   Platform,
   Modal,
+  Alert,
 } from "react-native";
 import axios from "axios";
 import { useFocusEffect } from "@react-navigation/native";
@@ -24,6 +25,8 @@ import Colors from "../../constants/colors";
 import * as Haptics from 'expo-haptics';
 import { useTheme } from "../data/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { emitCartUpdate } from "../../constants/CartEventEmitter";
+
 
 const BASE_URL = "http://192.168.29.43:5000"
 
@@ -50,6 +53,17 @@ interface EventItem {
   discount: string;
   badge: string;
   badgeColor: string;
+}
+
+// Guest Cart Item Type
+interface GuestCartItem {
+  _id: string;
+  foodId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: any;
+  category?: string;
 }
 
 /* ================= SLIDER IMAGES ================= */
@@ -103,6 +117,15 @@ const translations: Record<string, any> = {
 
     // Food Card
     rating: "Rating",
+
+    // Cart Messages
+    addedToCart: "Added to Cart",
+    itemAdded: "Item added to your cart",
+    viewCart: "View Cart",
+    continueShopping: "Continue Shopping",
+    loginRequired: "Login Required",
+    pleaseLogin: "Please login to order food",
+    guestMode: "Guest Mode",
   },
 
   // Hindi
@@ -135,6 +158,14 @@ const translations: Record<string, any> = {
     loadingFood: "स्वादिष्ट भोजन लोड हो रहा है...",
 
     rating: "रेटिंग",
+
+    addedToCart: "कार्ट में जोड़ा गया",
+    itemAdded: "आइटम आपके कार्ट में जोड़ दिया गया है",
+    viewCart: "कार्ट देखें",
+    continueShopping: "खरीदारी जारी रखें",
+    loginRequired: "लॉगिन आवश्यक",
+    pleaseLogin: "कृपया ऑर्डर करने के लिए लॉगिन करें",
+    guestMode: "अतिथि मोड",
   },
 
   // Marathi
@@ -167,6 +198,14 @@ const translations: Record<string, any> = {
     loadingFood: "स्वादिष्ट अन्न लोड होत आहे...",
 
     rating: "रेटिंग",
+
+    addedToCart: "कार्टमध्ये जोडले",
+    itemAdded: "वस्तू तुमच्या कार्टमध्ये जोडली गेली आहे",
+    viewCart: "कार्ट पहा",
+    continueShopping: "खरेदी सुरू ठेवा",
+    loginRequired: "लॉगिन आवश्यक",
+    pleaseLogin: "कृपया ऑर्डर करण्यासाठी लॉगिन करा",
+    guestMode: "पाहुणा मोड",
   },
 
   // Tamil
@@ -199,6 +238,14 @@ const translations: Record<string, any> = {
     loadingFood: "சுவையான உணவு ஏற்றப்படுகிறது...",
 
     rating: "மதிப்பீடு",
+
+    addedToCart: "வண்டியில் சேர்க்கப்பட்டது",
+    itemAdded: "பொருள் உங்கள் வண்டியில் சேர்க்கப்பட்டது",
+    viewCart: "வண்டியைப் பார்",
+    continueShopping: "ஷாப்பிங் தொடர்க",
+    loginRequired: "உள்நுழைவு தேவை",
+    pleaseLogin: "ஆர்டர் செய்ய உள்நுழையவும்",
+    guestMode: "விருந்தினர் முறை",
   },
 
   // Gujarati
@@ -231,6 +278,14 @@ const translations: Record<string, any> = {
     loadingFood: "સ્વાદિષ્ટ ભોજન લોડ થઈ રહ્યું છે...",
 
     rating: "રેટિંગ",
+
+    addedToCart: "કાર્ટમાં ઉમેરાયું",
+    itemAdded: "વસ્તુ તમારા કાર્ટમાં ઉમેરાઈ ગઈ છે",
+    viewCart: "કાર્ટ જુઓ",
+    continueShopping: "ખરીદી ચાલુ રાખો",
+    loginRequired: "લૉગિન આવશ્યક છે",
+    pleaseLogin: "કૃપા કરીને ઓર્ડર કરવા લૉગિન કરો",
+    guestMode: "મહેમાન મોડ",
   },
 };
 
@@ -258,6 +313,10 @@ export default function HomeScreen() {
   const [showItemModal, setShowItemModal] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [securityLevel, setSecurityLevel] = useState("standard");
+  const [favorites, setFavorites] = useState<string[]>([]);
+
+  // Guest cart state
+  const [guestCart, setGuestCart] = useState<GuestCartItem[]>([]);
 
   // Slider Refs
   const promoSliderRef = useRef<FlatList>(null);
@@ -283,10 +342,11 @@ export default function HomeScreen() {
   const puaGlowAnim = useRef(new Animated.Value(0)).current;
   const parallaxScroll = useRef(new Animated.Value(0)).current;
 
-  // 🔥 Load saved language
+  // 🔥 Load saved language and guest cart
   useFocusEffect(
     useCallback(() => {
       loadLanguage();
+      loadGuestCart();
     }, [])
   );
 
@@ -296,8 +356,95 @@ export default function HomeScreen() {
       if (savedLang) {
         setLanguage(savedLang);
       }
+      
+      const savedFavs = await AsyncStorage.getItem('favorites');
+      if (savedFavs) {
+        setFavorites(JSON.parse(savedFavs));
+      }
     } catch (error) {
-      console.log('Error loading language:', error);
+      console.log('Error loading language or favorites:', error);
+    }
+  };
+
+  // Load guest cart from AsyncStorage
+  const loadGuestCart = async () => {
+    try {
+      const savedCart = await AsyncStorage.getItem('guestCart');
+      if (savedCart) {
+        setGuestCart(JSON.parse(savedCart));
+      }
+    } catch (error) {
+      console.log("Error loading guest cart:", error);
+    }
+  };
+
+  // Save guest cart to AsyncStorage
+  const saveGuestCart = async (cart: GuestCartItem[]) => {
+    try {
+      await AsyncStorage.setItem('guestCart', JSON.stringify(cart));
+      setGuestCart(cart);
+    } catch (error) {
+      console.log("Error saving guest cart:", error);
+    }
+  };
+
+  // Add to guest cart function
+  const addToGuestCart = (item: any, qty: number = 1) => {
+    const existingItemIndex = guestCart.findIndex(cartItem => cartItem.foodId === item.id);
+    
+    let updatedCart: GuestCartItem[];
+    
+    if (existingItemIndex >= 0) {
+      // Update existing item
+      updatedCart = [...guestCart];
+      updatedCart[existingItemIndex] = {
+        ...updatedCart[existingItemIndex],
+        quantity: updatedCart[existingItemIndex].quantity + qty
+      };
+    } else {
+      // Add new item
+      const newItem: GuestCartItem = {
+        _id: Date.now().toString(), // Temporary ID for guest cart
+        foodId: item.id,
+        name: item.name,
+        price: item.price || 0,
+        quantity: qty,
+        image: item.image,
+        category: item.subname
+      };
+      updatedCart = [...guestCart, newItem];
+    }
+    
+    saveGuestCart(updatedCart);
+    
+    const updatedCount = updatedCart.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+    emitCartUpdate(updatedCount);
+    
+    // Show success message with options
+    Alert.alert(t('addedToCart'), `${item.name} ${t('itemAdded')}`);
+    
+    // Optional: Haptic feedback
+    if (Platform.OS === 'ios') {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackStyle.Success);
+    }
+  };
+
+  const toggleFavorite = async (id: string) => {
+    try {
+      let newFavs = [...favorites];
+      if (newFavs.includes(id)) {
+        newFavs = newFavs.filter(favId => favId !== id);
+      } else {
+        newFavs.push(id);
+      }
+      setFavorites(newFavs);
+      await AsyncStorage.setItem('favorites', JSON.stringify(newFavs));
+      
+      if (Platform.OS === 'ios') {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      }
+    } catch (error) {
+      console.log('Error toggling favorite:', error);
     }
   };
 
@@ -451,7 +598,7 @@ export default function HomeScreen() {
   /* ===== PUA ACTIVATION FUNCTION ===== */
   const activatePUAMode = () => {
     if (Platform.OS === 'ios') {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackStyle.Success);
     }
 
     Animated.sequence([
@@ -477,14 +624,25 @@ export default function HomeScreen() {
     }, 3000);
   };
 
-  const addToCart = async (item: any) => {
+  // 🔥 ADD BUTTON (Quick add to cart) - UPDATED FOR GUEST
+  const addOrder = async (item: any) => {
     try {
       const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        // Guest user - add to guest cart
+        addToGuestCart(item, quantity);
+
+        setShowItemModal(false);
+        setQuantity(1);
+        setSelectedItem(null);
+        return;
+      }
 
       await axios.post(
         `${BASE_URL}/api/cart`,
         {
-          foodId: item.id || item._id,
+          foodId: item.id,
           quantity: quantity
         },
         {
@@ -494,12 +652,67 @@ export default function HomeScreen() {
         }
       );
 
+      // 🔥 update cart badge live
+      const currentCount = await AsyncStorage.getItem("cartCount");
+      const newCount = currentCount ? JSON.parse(currentCount) + quantity : quantity;
+      await emitCartUpdate(newCount);
+
       setShowItemModal(false);
       setQuantity(1);
+      setSelectedItem(null);
+
+      Alert.alert("Success", "Item added to cart");
+
+    } catch (error: any) {
+      console.log("ORDER ERROR:", error.response?.data || error.message);
+      Alert.alert("Error", "Could not add item to cart.");
+    }
+  };
+
+  // 🔥 ADD TO CART BUTTON (Add and go to cart) - UPDATED FOR GUEST
+  const addToCart = async (item: any) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        // Guest user - add to guest cart and go to cart
+        addToGuestCart(item, quantity);
+        
+        setShowItemModal(false);
+        setQuantity(1);
+        setSelectedItem(null);
+        
+        router.push("/cart");
+        return;
+      }
+
+      await axios.post(
+        `${BASE_URL}/api/cart`,
+        {
+          foodId: item.id,
+          quantity: quantity
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // 🔥 update cart badge live
+      const currentCount = await AsyncStorage.getItem("cartCount");
+      const newCount = currentCount ? JSON.parse(currentCount) + quantity : quantity;
+      await emitCartUpdate(newCount);
+
+      setShowItemModal(false);
+      setQuantity(1);
+      setSelectedItem(null);
+
       router.push("/cart");
 
     } catch (error: any) {
       console.log("CART ERROR:", error.response?.data || error.message);
+      Alert.alert("Error", "Could not add item to cart.");
     }
   };
 
@@ -587,14 +800,10 @@ export default function HomeScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }
 
-            router.push({
-              pathname: "/menu",
-              params: {
-                name: item.subname ? `${item.name} ${item.subname}` : item.name,
-                image: item.image,
-                color: item.color
-              },
-            });
+            // Instead of navigating to menu, show modal for direct order
+            setSelectedItem(item);
+            setQuantity(1);
+            setShowItemModal(true);
           }}
           style={styles.cardTouchable}
         >
@@ -702,8 +911,20 @@ export default function HomeScreen() {
                   }
                 ]}
               >
-                <Text style={[styles.itemCountText, { color: colors.subText }]}>{item.items}</Text>
+                <Text style={[styles.itemCountText, { color: colors.primary }]}>{item.items}</Text>
               </Animated.View>
+
+              <TouchableOpacity
+                style={styles.favoriteBadge}
+                onPress={() => toggleFavorite(item.id)}
+                activeOpacity={0.7}
+              >
+                <Ionicons
+                  name={favorites.includes(item.id) ? "heart" : "heart-outline"}
+                  size={18}
+                  color={favorites.includes(item.id) ? "#FF4757" : "#FFFFFF"}
+                />
+              </TouchableOpacity>
             </View>
           </ImageBackground>
         </TouchableOpacity>
@@ -1702,7 +1923,8 @@ export default function HomeScreen() {
           <Text style={styles.puaFooterText}>{t("proModeActive")}</Text>
         </Animated.View>
       )}
-      {/* ITEM MODAL FOR DIRECT ORDER */}
+
+      {/* ITEM MODAL FOR DIRECT ORDER - UPDATED FOR GUEST */}
       {selectedItem && (
         <Modal
           transparent
@@ -1731,7 +1953,7 @@ export default function HomeScreen() {
               <View style={styles.modalHeaderInfo}>
                 <View style={{ flex: 1 }}>
                   <Text style={[styles.modalItemName, { color: colors.text }]}>{selectedItem.name}</Text>
-                  <Text style={[styles.modalItemDescription, { color: colors.subText }]}>{selectedItem.description}</Text>
+                  <Text style={[styles.modalItemDescription, { color: colors.subText }]}>{selectedItem.description || selectedItem.subname}</Text>
                 </View>
                 <TouchableOpacity
                   style={styles.modalCloseButton}
@@ -1744,31 +1966,44 @@ export default function HomeScreen() {
                 </TouchableOpacity>
               </View>
 
-              <View style={styles.modalActions}>
-                <View style={[styles.quantitySelector, { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' }]}>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                  >
-                    <Ionicons name="remove" size={20} color={colors.text} />
-                  </TouchableOpacity>
-                  <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
-                  <TouchableOpacity
-                    style={styles.quantityButton}
-                    onPress={() => setQuantity(quantity + 1)}
-                  >
-                    <Ionicons name="add" size={20} color={colors.text} />
-                  </TouchableOpacity>
-                </View>
+              {/* Quantity Selector */}
+              <View style={styles.quantitySelector}>
+                <TouchableOpacity
+                  style={[styles.quantityButton, { borderColor: colors.border }]}
+                  onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                >
+                  <Text style={[styles.quantityButtonText, { color: colors.text }]}>-</Text>
+                </TouchableOpacity>
+                
+                <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
+                
+                <TouchableOpacity
+                  style={[styles.quantityButton, { borderColor: colors.border }]}
+                  onPress={() => setQuantity(quantity + 1)}
+                >
+                  <Text style={[styles.quantityButtonText, { color: colors.text }]}>+</Text>
+                </TouchableOpacity>
+              </View>
 
+              <View style={styles.modalActions}>
+                {/* ADD BUTTON (Quick add to cart) */}
+                <TouchableOpacity
+                  style={[styles.addButton, { borderColor: colors.primary }]}
+                  onPress={() => addOrder(selectedItem)}
+                >
+                  <Text style={[styles.addButtonText, { color: colors.primary }]}>
+                    {t("add")}
+                  </Text>
+                </TouchableOpacity>
+
+                {/* ADD TO CART BUTTON (Add and go to cart) */}
                 <TouchableOpacity
                   style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
                   onPress={() => addToCart(selectedItem)}
-                  activeOpacity={0.8}
                 >
-                  <Ionicons name="cart" size={20} color="#FFFFFF" />
+                  <Ionicons name="cart" size={20} color="#FFF" />
                   <Text style={styles.addToCartButtonText}>
-                    Add to Cart • ₹{(selectedItem.price * quantity).toFixed(0)}
+                    {t("addToCart")} • ₹{(selectedItem.price * quantity).toFixed(0)}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -1864,6 +2099,19 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#4CD964',
     letterSpacing: 1,
+  },
+  addButton: {
+    height: 56,
+    paddingHorizontal: 25,
+    borderRadius: 16,
+    borderWidth: 2,
+    justifyContent: "center",
+    alignItems: "center",
+    flex: 1,
+  },
+  addButtonText: {
+    fontSize: 16,
+    fontWeight: "700"
   },
   searchContainer: {
     paddingHorizontal: 20,
@@ -2155,6 +2403,18 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '500',
   },
+  favoriteBadge: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
   showMoreButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -2394,19 +2654,32 @@ const styles = StyleSheet.create({
   quantitySelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: 12,
-    padding: 4,
+    justifyContent: 'center',
+    marginBottom: 20,
+    gap: 20,
   },
   quantityButton: {
-    padding: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  quantityButtonText: {
+    fontSize: 24,
+    fontWeight: '500',
+    lineHeight: 28,
   },
   quantityText: {
-    fontSize: 18,
-    fontWeight: '700',
-    paddingHorizontal: 15,
+    fontSize: 20,
+    fontWeight: '600',
+    minWidth: 30,
+    textAlign: 'center',
   },
   addToCartButton: {
-    flex: 1,
+    flex: 2,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',

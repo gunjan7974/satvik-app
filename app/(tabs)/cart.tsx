@@ -1,6 +1,7 @@
 import axios from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { BASE_URL } from "../../config/api";
+import { emitCartUpdate } from "../../constants/CartEventEmitter";
 import { useFocusEffect } from "@react-navigation/native";
 import { useCallback } from "react";
 import { Dimensions } from "react-native";
@@ -15,9 +16,11 @@ import {
   ScrollView,
   SafeAreaView,
   Modal,
+  Image,
+  FlatList,
 } from "react-native";
 import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+import { useRouter, useLocalSearchParams } from "expo-router";
 import { useTheme } from "../data/ThemeContext";
 
 // 🔥 TRANSLATIONS FOR 5 LANGUAGES
@@ -92,6 +95,12 @@ const translations = {
     
     // Rating
     rating: "Rating",
+    
+    // Guest Messages
+    loginRequired: "Login Required",
+    pleaseLoginToPlaceOrder: "Please login to place your order",
+    guestCart: "Guest Cart",
+    login: "Login",
   },
 
   hi: {
@@ -153,6 +162,11 @@ const translations = {
     yesCancel: "हां, रद्द करें",
     
     rating: "रेटिंग",
+    
+    loginRequired: "लॉगिन आवश्यक",
+    pleaseLoginToPlaceOrder: "कृपया ऑर्डर देने के लिए लॉगिन करें",
+    guestCart: "अतिथि कार्ट",
+    login: "लॉगिन",
   },
 
   mr: {
@@ -214,6 +228,11 @@ const translations = {
     yesCancel: "होय, रद्द करा",
     
     rating: "रेटिंग",
+    
+    loginRequired: "लॉगिन आवश्यक",
+    pleaseLoginToPlaceOrder: "कृपया ऑर्डर देण्यासाठी लॉगिन करा",
+    guestCart: "पाहुणा कार्ट",
+    login: "लॉगिन",
   },
 
   ta: {
@@ -275,6 +294,11 @@ const translations = {
     yesCancel: "ஆம், ரத்து செய்",
     
     rating: "மதிப்பீடு",
+    
+    loginRequired: "உள்நுழைவு தேவை",
+    pleaseLoginToPlaceOrder: "ஆர்டர் செய்ய உள்நுழையவும்",
+    guestCart: "விருந்தினர் வண்டி",
+    login: "உள்நுழைக",
   },
 
   gu: {
@@ -336,6 +360,11 @@ const translations = {
     yesCancel: "હા, રદ કરો",
     
     rating: "રેટિંગ",
+    
+    loginRequired: "લૉગિન આવશ્યક છે",
+    pleaseLoginToPlaceOrder: "કૃપા કરીને ઓર્ડર આપવા લૉગિન કરો",
+    guestCart: "મહેમાન કાર્ટ",
+    login: "લૉગિન",
   },
 };
 
@@ -346,18 +375,37 @@ type CartItem = {
   qty: number;
   category: string;
   description?: string;
+  image?: any;
 };
+
+// Guest Cart Item Type
+interface GuestCartItem {
+  _id: string;
+  foodId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: any;
+  category?: string;
+}
 
 export default function CartScreen() {
   const { colors, mode } = useTheme();
   const router = useRouter();
+  const params = useLocalSearchParams();
   
   // Language state
   const [languageCode, setLanguageCode] = useState("en");
 
+  // Guest cart state
+  const [guestCart, setGuestCart] = useState<GuestCartItem[]>([]);
+  const [isGuest, setIsGuest] = useState(false);
+
   // Load saved language from AsyncStorage
   useEffect(() => {
     loadLanguage();
+    checkLoginStatus();
+    loadGuestCartFromParams();
   }, []);
 
   const loadLanguage = async () => {
@@ -368,6 +416,54 @@ export default function CartScreen() {
       }
     } catch (error) {
       console.log('Error loading language:', error);
+    }
+  };
+
+  // Check if user is logged in
+  const checkLoginStatus = async () => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+      setIsGuest(!token);
+    } catch (error) {
+      console.log("Error checking login status:", error);
+    }
+  };
+
+  // Load guest cart from params (passed from Home/Menu)
+  const loadGuestCartFromParams = () => {
+    try {
+      if (params.guestCart) {
+        const parsedCart = JSON.parse(params.guestCart as string);
+        setGuestCart(parsedCart);
+        setIsGuest(true);
+      } else {
+        // Try to load from AsyncStorage
+        loadGuestCart();
+      }
+    } catch (error) {
+      console.log("Error loading guest cart from params:", error);
+    }
+  };
+
+  // Load guest cart from AsyncStorage
+  const loadGuestCart = async () => {
+    try {
+      const savedCart = await AsyncStorage.getItem('guestCart');
+      if (savedCart) {
+        setGuestCart(JSON.parse(savedCart));
+      }
+    } catch (error) {
+      console.log("Error loading guest cart:", error);
+    }
+  };
+
+  // Save guest cart to AsyncStorage
+  const saveGuestCart = async (cart: GuestCartItem[]) => {
+    try {
+      await AsyncStorage.setItem('guestCart', JSON.stringify(cart));
+      setGuestCart(cart);
+    } catch (error) {
+      console.log("Error saving guest cart:", error);
     }
   };
 
@@ -398,6 +494,7 @@ export default function CartScreen() {
   };
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const cartCount = cartItems.reduce((sum, item) => sum + item.qty, 0);
   const [specialInstructions, setSpecialInstructions] = useState("");
   const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
   const [couponCode, setCouponCode] = useState("");
@@ -405,14 +502,78 @@ export default function CartScreen() {
   const { width } = Dimensions.get("window");
   
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (!isGuest) {
+      fetchCart();
+    }
+  }, [isGuest]);
 
   useFocusEffect(
     useCallback(() => {
-      fetchCart();
-    }, [])
+      if (!isGuest) {
+        fetchCart();
+      } else {
+        loadGuestCart();
+      }
+      loadFavorites();
+    }, [isGuest])
   );
+
+  const loadFavorites = async () => {
+    try {
+      const savedFavs = await AsyncStorage.getItem('favorites');
+      if (savedFavs) {
+        setFavorites(JSON.parse(savedFavs));
+      }
+    } catch (error) {
+      console.log('Error loading favorites:', error);
+    }
+  };
+
+  const fetchFavoriteItems = async () => {
+    try {
+      setLoadingFavorites(true);
+      const savedFavs = await AsyncStorage.getItem('favorites');
+      if (!savedFavs) {
+        setFavoriteItems([]);
+        return;
+      }
+      
+      const favIds = JSON.parse(savedFavs);
+      if (favIds.length === 0) {
+        setFavoriteItems([]);
+        return;
+      }
+
+      // Fetch all foods and filter by favIds
+      const response = await axios.get(`${BASE_URL}/api/foods`);
+      const allFoods = response.data;
+      
+      const filtered = allFoods.filter((f: any) => favIds.includes(f._id));
+      setFavoriteItems(filtered);
+    } catch (error) {
+      console.log('Error fetching favorite items:', error);
+    } finally {
+      setLoadingFavorites(false);
+    }
+  };
+
+  const toggleFavorite = async (id: string) => {
+    try {
+      let newFavs = [...favorites];
+      if (newFavs.includes(id)) {
+        newFavs = newFavs.filter(favId => favId !== id);
+      } else {
+        newFavs.push(id);
+      }
+      setFavorites(newFavs);
+      await AsyncStorage.setItem('favorites', JSON.stringify(newFavs));
+      
+      // Update favoriteItems list if modal is open
+      setFavoriteItems(prev => prev.filter(item => newFavs.includes(item._id)));
+    } catch (error) {
+      console.log('Error toggling favorite:', error);
+    }
+  };
 
   const fetchCart = async () => {
     try {
@@ -435,6 +596,9 @@ export default function CartScreen() {
         }));
 
         setCartItems(formatted);
+        await AsyncStorage.setItem("cartCount", JSON.stringify(
+          formatted.reduce((sum, item) => sum + item.qty, 0)
+        ));
       } else {
         setCartItems([]);
       }
@@ -451,37 +615,76 @@ export default function CartScreen() {
   const [orderId, setOrderId] = useState("");
   const [orderTotal, setOrderTotal] = useState(0);
 
-  // Calculate totals
-  const subtotal = cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  // Favorites States
+  const [favorites, setFavorites] = useState<string[]>([]);
+  const [favoriteItems, setFavoriteItems] = useState<any[]>([]);
+  const [showFavoritesModal, setShowFavoritesModal] = useState(false);
+  const [loadingFavorites, setLoadingFavorites] = useState(false);
+
+  // Calculate totals (for both guest and logged-in)
+  const subtotal = isGuest 
+    ? guestCart.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    : cartItems.reduce((sum, item) => sum + item.price * item.qty, 0);
+  
   const deliveryFee = subtotal > 300 ? 0 : 40;
   const discount = appliedCoupon ? subtotal * 0.1 : 0;
   const tax = subtotal * 0.05;
   const totalAmount = subtotal + deliveryFee + tax - discount;
   
   const updateQuantity = async (foodId: string, change: number) => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-
-      const action = change === 1 ? "increase" : "decrease";
-
-      await axios.put(
-        `${BASE_URL}/api/cart/${foodId}`,
-        { action },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+    if (isGuest) {
+      // Guest cart update
+      const updatedCart = guestCart.map(item => {
+        if (item.foodId === foodId) {
+          const newQty = change === 1 ? item.quantity + 1 : item.quantity - 1;
+          return { ...item, quantity: Math.max(1, newQty) };
         }
-      );
+        return item;
+      }).filter(item => item.quantity > 0);
 
-      fetchCart();
+      await saveGuestCart(updatedCart);
+      const updatedCount = updatedCart.reduce((sum, item) => sum + item.quantity, 0);
+      await emitCartUpdate(updatedCount);
+    } else {
+      // Logged-in user cart update
+      try {
+        const token = await AsyncStorage.getItem("token");
+        const action = change === 1 ? "increase" : "decrease";
 
-    } catch (error) {
-      console.log("UPDATE ERROR:", error);
+        await axios.put(
+          `${BASE_URL}/api/cart/${foodId}`,
+          { action },
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        await fetchCart();
+        // fetchCart already saves cartCount — emit the updated value
+        const saved = await AsyncStorage.getItem("cartCount");
+        await emitCartUpdate(saved ? JSON.parse(saved) : 0);
+      } catch (error) {
+        console.log("UPDATE ERROR:", error);
+      }
     }
   };
 
   const placeOrder = async () => {
+    if (isGuest) {
+      // Guest user - show login prompt
+      Alert.alert(
+        t('loginRequired'),
+        t('pleaseLoginToPlaceOrder'),
+        [
+          { text: t('cancel'), style: "cancel" },
+          { text: t('login'), onPress: () => router.push("/auth/login") }
+        ]
+      );
+      return;
+    }
+
     try {
       setIsProcessingOrder(true);
 
@@ -497,9 +700,11 @@ export default function CartScreen() {
         }
       );
 
-      setOrderTotal(totalAmount); 
+      setOrderTotal(totalAmount);
       setOrderId(data._id);
       setOrderStatus("success");
+      // 🔥 reset badge to 0 immediately
+      await emitCartUpdate(0);
       setShowOrderModal(true);
       await fetchCart();
 
@@ -512,18 +717,29 @@ export default function CartScreen() {
   };
 
   const removeItem = async (foodId: string) => {
-    try {
-      const token = await AsyncStorage.getItem("token");
+    if (isGuest) {
+      // Remove from guest cart
+      const updatedCart = guestCart.filter(item => item.foodId !== foodId);
+      await saveGuestCart(updatedCart);
+      const updatedCount = updatedCart.reduce((sum, item) => sum + item.quantity, 0);
+      await emitCartUpdate(updatedCount);
+    } else {
+      // Remove from server cart
+      try {
+        const token = await AsyncStorage.getItem("token");
 
-      await axios.delete(`${BASE_URL}/api/cart/${foodId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        await axios.delete(`${BASE_URL}/api/cart/${foodId}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
 
-      fetchCart();
-    } catch (error) {
-      console.log("DELETE ERROR:", error);
+        await fetchCart();
+        const saved = await AsyncStorage.getItem("cartCount");
+        await emitCartUpdate(saved ? JSON.parse(saved) : 0);
+      } catch (error) {
+        console.log("DELETE ERROR:", error);
+      }
     }
   };
 
@@ -578,66 +794,85 @@ export default function CartScreen() {
     );
   };
 
-  const renderCartItem = (item: CartItem, index: number) => (
-    <View key={item.id + index} style={[
-      styles.itemCard, 
-      { 
-        backgroundColor: colors.card,
-        borderColor: colors.border,
-      }
-    ]}>
-      <View style={styles.itemLeft}>
-        <View style={styles.itemHeader}>
-          <Text style={[styles.itemName, { color: colors.text }]}>{item.name}</Text>
-          <View style={[styles.ratingContainer, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}>
-            <Ionicons name="star" size={14} color="#FFC107" />
-            <Text style={[styles.ratingText, { color: colors.text }]}>4.5</Text>
+  const renderCartItem = (item: CartItem | GuestCartItem, index: number) => {
+    // Handle both CartItem and GuestCartItem types
+    const itemId = 'foodId' in item ? item.foodId : item.id;
+    const itemName = item.name;
+    const itemPrice = item.price;
+    const itemQty = 'quantity' in item ? item.quantity : item.qty;
+    const itemCategory = item.category || "";
+    const itemDescription = item.description || "";
+
+    return (
+      <View key={itemId + index} style={[
+        styles.itemCard, 
+        { 
+          backgroundColor: colors.card,
+          borderColor: colors.border,
+        }
+      ]}>
+        <View style={styles.itemLeft}>
+          <View style={styles.itemHeader}>
+            <Text style={[styles.itemName, { color: colors.text }]}>{itemName}</Text>
+            <View style={[styles.ratingContainer, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}>
+              <Ionicons name="star" size={14} color="#FFC107" />
+              <Text style={[styles.ratingText, { color: colors.text }]}>4.5</Text>
+            </View>
+          </View>
+
+          {itemDescription && (
+            <Text style={[styles.itemDescription, { color: colors.subText }]}>{itemDescription}</Text>
+          )}
+
+          <View style={styles.itemMeta}>
+            <View style={[styles.categoryChip, { backgroundColor: colors.primary + '20' }]}>
+              <Ionicons name="leaf-outline" size={12} color={colors.primary} />
+              <Text style={[styles.categoryText, { color: colors.primary }]}>{itemCategory}</Text>
+            </View>
+            <Text style={[styles.itemPrice, { color: colors.primary }]}>₹{itemPrice}</Text>
           </View>
         </View>
 
-        {item.description && (
-          <Text style={[styles.itemDescription, { color: colors.subText }]}>{item.description}</Text>
-        )}
+        <View style={styles.itemRight}>
+          <View style={[styles.quantityBox, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}>
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => updateQuantity(itemId, -1)}
+            >
+              <Ionicons name="remove" size={16} color={colors.text} />
+            </TouchableOpacity>
 
-        <View style={styles.itemMeta}>
-          <View style={[styles.categoryChip, { backgroundColor: colors.primary + '20' }]}>
-            <Ionicons name="leaf-outline" size={12} color={colors.primary} />
-            <Text style={[styles.categoryText, { color: colors.primary }]}>{item.category}</Text>
+            <Text style={[styles.qtyText, { color: colors.text }]}>{itemQty}</Text>
+
+            <TouchableOpacity
+              style={styles.qtyButton}
+              onPress={() => updateQuantity(itemId, 1)}
+            >
+              <Ionicons name="add" size={16} color={colors.text} />
+            </TouchableOpacity>
           </View>
-          <Text style={[styles.itemPrice, { color: colors.primary }]}>₹{item.price}</Text>
-        </View>
-      </View>
 
-      <View style={styles.itemRight}>
-        <View style={[styles.quantityBox, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}>
-          <TouchableOpacity
-            style={styles.qtyButton}
-            onPress={() => updateQuantity(item.id, -1)}
-          >
-            <Ionicons name="remove" size={16} color={colors.text} />
-          </TouchableOpacity>
-
-          <Text style={[styles.qtyText, { color: colors.text }]}>{item.qty}</Text>
+          <Text style={[styles.itemTotal, { color: colors.text }]}>₹{itemPrice * itemQty}</Text>
 
           <TouchableOpacity
-            style={styles.qtyButton}
-            onPress={() => updateQuantity(item.id, 1)}
+            style={styles.removeButton}
+            onPress={() => removeItem(itemId)}
           >
-            <Ionicons name="add" size={16} color={colors.text} />
+            <Ionicons name="trash-outline" size={18} color={colors.danger} />
           </TouchableOpacity>
         </View>
-
-        <Text style={[styles.itemTotal, { color: colors.text }]}>₹{item.price * item.qty}</Text>
-
-        <TouchableOpacity
-          style={styles.removeButton}
-          onPress={() => removeItem(item.id)}
-        >
-          <Ionicons name="trash-outline" size={18} color={colors.danger} />
-        </TouchableOpacity>
       </View>
-    </View>
-  );
+    );
+  };
+
+  // Get display items (guest cart or server cart)
+  const displayItems = isGuest 
+    ? guestCart 
+    : cartItems.map(item => ({
+        ...item,
+        quantity: item.qty,
+        foodId: item.id
+      }));
 
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -657,19 +892,111 @@ export default function CartScreen() {
         </TouchableOpacity>
 
         <View style={styles.headerCenter}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>{t('myCart')}</Text>
+          <Text style={[styles.headerTitle, { color: colors.text }]}>
+            {isGuest ? t('guestCart') : t('myCart')}
+          </Text>
           <Text style={[styles.headerSubtitle, { color: colors.subText }]}>
-            {cartItems.length} {cartItems.length === 1 ? t('item') : t('items')}
+            {displayItems.length} {displayItems.length === 1 ? t('item') : t('items')}
           </Text>
         </View>
 
         <TouchableOpacity
           style={[styles.favoriteButton, { backgroundColor: mode === 'dark' ? colors.background : '#FFFBF7' }]}
-          onPress={() => Alert.alert(t('favorites'), t('favorites'))}
+          onPress={() => {
+            fetchFavoriteItems();
+            setShowFavoritesModal(true);
+          }}
         >
-          <Ionicons name="heart-outline" size={24} color={colors.primary} />
+          <Ionicons name="heart" size={24} color={colors.primary} />
         </TouchableOpacity>
       </View>
+
+      {/* Favorites Modal */}
+      <Modal
+        visible={showFavoritesModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowFavoritesModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.favoritesModalContent, { backgroundColor: colors.card }]}>
+            <View style={[styles.favoritesModalHeader, { borderBottomColor: colors.border }]}>
+              <View style={styles.favoritesTitleGroup}>
+                <Ionicons name="heart" size={24} color={colors.primary} />
+                <Text style={[styles.favoritesModalTitle, { color: colors.text }]}>
+                  {t('favorites')}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowFavoritesModal(false)}
+                style={[styles.closeButton, { backgroundColor: mode === 'dark' ? colors.background : '#F5F5F5' }]}
+              >
+                <Ionicons name="close" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {loadingFavorites ? (
+              <View style={styles.favLoadingContainer}>
+                <Ionicons name="restaurant" size={40} color={colors.primary} />
+                <Text style={[styles.favLoadingText, { color: colors.subText }]}>{t('loading')}</Text>
+              </View>
+            ) : favoriteItems.length > 0 ? (
+              <FlatList
+                data={favoriteItems}
+                keyExtractor={(item) => item._id}
+                renderItem={({ item }) => (
+                  <View style={[styles.favItem, { borderBottomColor: colors.border }]}>
+                    <Image
+                      source={{ uri: item.image || "https://via.placeholder.com/150" }}
+                      style={styles.favItemImage}
+                    />
+                    <View style={styles.favItemDetails}>
+                      <Text style={[styles.favItemName, { color: colors.text }]} numberOfLines={1}>
+                        {item.name}
+                      </Text>
+                      <Text style={[styles.favItemPrice, { color: colors.primary }]}>
+                        ₹{item.price}
+                      </Text>
+                    </View>
+                    <View style={styles.favItemActions}>
+                      <TouchableOpacity
+                        style={[styles.favItemAdd, { backgroundColor: colors.primary }]}
+                        onPress={() => {
+                          // Logic to add to cart
+                          setShowFavoritesModal(false);
+                          router.push({
+                            pathname: '/',
+                            params: { search: item.name }
+                          });
+                        }}
+                      >
+                        <Ionicons name="add" size={20} color="#FFF" />
+                      </TouchableOpacity>
+                      <TouchableOpacity
+                        style={styles.favItemRemove}
+                        onPress={() => toggleFavorite(item._id)}
+                      >
+                        <Ionicons name="heart" size={24} color="#FF4757" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+                contentContainerStyle={styles.favListContent}
+              />
+            ) : (
+              <View style={styles.favEmptyContainer}>
+                <Ionicons name="heart-outline" size={60} color={colors.border} />
+                <Text style={[styles.favEmptyText, { color: colors.text }]}>
+                  {t('noItemsFound')}
+                </Text>
+                <Text style={[styles.favEmptySubText, { color: colors.subText }]}>
+                  {t('addItems')}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Modal>
 
       {/* Order Status Modal */}
       <Modal
@@ -756,7 +1083,11 @@ export default function CartScreen() {
                     }]}
                     onPress={() => {
                       setShowOrderModal(false);
-                      fetchCart();
+                      if (isGuest) {
+                        loadGuestCart();
+                      } else {
+                        fetchCart();
+                      }
                     }}
                   >
                     <Text style={[styles.secondaryButtonText, { color: colors.text }]}>{t('backToCart')}</Text>
@@ -789,7 +1120,7 @@ export default function CartScreen() {
         </View>
       </Modal>
 
-      {cartItems.length === 0 ? (
+      {displayItems.length === 0 ? (
         <View style={styles.emptyState}>
           {orderStatus === 'success' ? (
             <>
@@ -842,7 +1173,7 @@ export default function CartScreen() {
             {/* Cart Items */}
             <View style={styles.section}>
               <Text style={[styles.sectionTitle, { color: colors.text }]}>{t('orderItems')}</Text>
-              {cartItems.map((item, index) => renderCartItem(item, index))}
+              {displayItems.map((item, index) => renderCartItem(item, index))}
             </View>
 
             {/* Special Instructions */}
@@ -1513,5 +1844,118 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600",
     letterSpacing: 0.3,
+  },
+
+  // FAVORITES MODAL
+  favoritesModalContent: {
+    width: "100%",
+    height: "80%",
+    borderTopLeftRadius: 30,
+    borderTopRightRadius: 30,
+    padding: 20,
+    elevation: 25,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+  },
+  favoritesModalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 20,
+    borderBottomWidth: 1,
+    marginBottom: 10,
+  },
+  favoritesTitleGroup: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+  },
+  favoritesModalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  favListContent: {
+    paddingBottom: 20,
+  },
+  favItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 15,
+    borderBottomWidth: 1,
+  },
+  favItemImage: {
+    width: 60,
+    height: 60,
+    borderRadius: 12,
+    backgroundColor: "#F5F5F5",
+  },
+  favItemDetails: {
+    flex: 1,
+    marginLeft: 15,
+  },
+  favItemName: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 4,
+  },
+  favItemPrice: {
+    fontSize: 15,
+    fontWeight: "700",
+  },
+  favItemActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 15,
+  },
+  favItemAdd: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  favItemRemove: {
+    padding: 5,
+  },
+  favEmptyContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    paddingBottom: 40,
+  },
+  favEmptyText: {
+    fontSize: 18,
+    fontWeight: "600",
+    marginTop: 15,
+    marginBottom: 8,
+  },
+  favEmptySubText: {
+    fontSize: 14,
+    textAlign: "center",
+    opacity: 0.7,
+  },
+  favLoadingContainer: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  favLoadingText: {
+    marginTop: 10,
+    fontSize: 16,
+    fontWeight: "500",
   },
 });

@@ -22,6 +22,7 @@ import {
   Dimensions,
 } from "react-native";
 import { useTheme } from "../data/ThemeContext";
+import { useAuth } from "../data/AuthContext"; // 👈 Import useAuth
 
 const { width } = Dimensions.get("window");
 
@@ -52,23 +53,23 @@ const translations: Record<string, any> = {
     noOrders: "No orders yet",
     noOrdersDesc: "Start ordering delicious food!",
     browseMenu: "Browse Menu",
-    
+
     // Filters
     all: "All",
     active: "Active",
     delivered: "Delivered",
     cancelled: "Cancelled",
-    
+
     // Status
     orderPlaced: "Order Placed",
     preparing: "Preparing",
     onTheWay: "On the way",
-    
+
     // Actions
     cancel: "Cancel",
     reorder: "Reorder",
     details: "Details",
-    
+
     // Alerts
     cancelTitle: "Cancel Order",
     cancelConfirm: "Are you sure you want to cancel this order?",
@@ -81,11 +82,18 @@ const translations: Record<string, any> = {
     success: "Success",
     itemsAdded: "Items added to cart!",
     error: "Error",
-    
+
     // Time
     today: "Today",
     yesterday: "Yesterday",
     daysAgo: "days ago",
+
+    // 👇 Guest user messages
+    guestWarning: "Guest users cannot view orders",
+    guestWarningDesc: "Please login to view your order history",
+    loginRequired: "Login Required",
+    login: "Login",
+    cancel: "Cancel",
   },
 
   // Hindi
@@ -96,20 +104,20 @@ const translations: Record<string, any> = {
     noOrders: "अभी तक कोई ऑर्डर नहीं",
     noOrdersDesc: "स्वादिष्ट भोजन ऑर्डर करना शुरू करें!",
     browseMenu: "मेनू देखें",
-    
+
     all: "सभी",
     active: "सक्रिय",
     delivered: "डिलीवर",
     cancelled: "रद्द",
-    
+
     orderPlaced: "ऑर्डर दिया गया",
     preparing: "तैयार हो रहा है",
     onTheWay: "रास्ते में",
-    
+
     cancel: "रद्द करें",
     reorder: "फिर से ऑर्डर करें",
     details: "विवरण",
-    
+
     cancelTitle: "ऑर्डर रद्द करें",
     cancelConfirm: "क्या आप वाकई यह ऑर्डर रद्द करना चाहते हैं?",
     cancelSuccess: "ऑर्डर सफलतापूर्वक रद्द कर दिया गया",
@@ -121,10 +129,17 @@ const translations: Record<string, any> = {
     success: "सफलता",
     itemsAdded: "आइटम कार्ट में जोड़ दिए गए!",
     error: "त्रुटि",
-    
+
     today: "आज",
     yesterday: "कल",
     daysAgo: "दिन पहले",
+
+    // 👇 Guest user messages
+    guestWarning: "मेहमान उपयोगकर्ता ऑर्डर नहीं देख सकते",
+    guestWarningDesc: "अपना ऑर्डर इतिहास देखने के लिए कृपया लॉगिन करें",
+    loginRequired: "लॉगिन आवश्यक",
+    login: "लॉगिन",
+    cancel: "रद्द करें",
   },
 
   // Marathi
@@ -135,20 +150,20 @@ const translations: Record<string, any> = {
     noOrders: "अद्याप कोणतेही ऑर्डर नाहीत",
     noOrdersDesc: "स्वादिष्ट अन्न ऑर्डर करणे सुरू करा!",
     browseMenu: "मेनू ब्राउझ करा",
-    
+
     all: "सर्व",
     active: "सक्रिय",
     delivered: "वितरित",
     cancelled: "रद्द",
-    
+
     orderPlaced: "ऑर्डर दिला",
     preparing: "तयार होत आहे",
     onTheWay: "मार्गावर",
-    
+
     cancel: "रद्द करा",
     reorder: "पुन्हा ऑर्डर करा",
     details: "तपशील",
-    
+
     cancelTitle: "ऑर्डर रद्द करा",
     cancelConfirm: "तुम्हाला खात्री आहे की तुम्ही हा ऑर्डर रद्द करू इच्छिता?",
     cancelSuccess: "ऑर्डर यशस्वीरित्या रद्द केला",
@@ -160,10 +175,17 @@ const translations: Record<string, any> = {
     success: "यश",
     itemsAdded: "वस्तू कार्टमध्ये जोडल्या गेल्या!",
     error: "त्रुटी",
-    
+
     today: "आज",
     yesterday: "काल",
     daysAgo: "दिवसांपूर्वी",
+
+    // 👇 Guest user messages
+    guestWarning: "पाहुणे वापरकर्ते ऑर्डर पाहू शकत नाहीत",
+    guestWarningDesc: "तुमचा ऑर्डर इतिहास पाहण्यासाठी कृपया लॉगिन करा",
+    loginRequired: "लॉगिन आवश्यक",
+    login: "लॉगिन",
+    cancel: "रद्द करा",
   },
 
   // Tamil
@@ -174,20 +196,20 @@ const translations: Record<string, any> = {
     noOrders: "இதுவரை ஆர்டர்கள் இல்லை",
     noOrdersDesc: "சுவையான உணவை ஆர்டர் செய்யத் தொடங்குங்கள்!",
     browseMenu: "மெனுவை உலாவுக",
-    
+
     all: "அனைத்தும்",
     active: "செயலில்",
     delivered: "வழங்கப்பட்டது",
     cancelled: "ரத்து செய்யப்பட்டது",
-    
+
     orderPlaced: "ஆர்டர் செய்யப்பட்டது",
     preparing: "தயாராகிறது",
     onTheWay: "வழியில்",
-    
+
     cancel: "ரத்து",
     reorder: "மீண்டும் ஆர்டர்",
     details: "விவரங்கள்",
-    
+
     cancelTitle: "ஆர்டரை ரத்து செய்",
     cancelConfirm: "இந்த ஆர்டரை ரத்து செய்ய விரும்புகிறீர்களா?",
     cancelSuccess: "ஆர்டர் வெற்றிகரமாக ரத்து செய்யப்பட்டது",
@@ -199,10 +221,17 @@ const translations: Record<string, any> = {
     success: "வெற்றி",
     itemsAdded: "பொருட்கள் கார்ட்டில் சேர்க்கப்பட்டன!",
     error: "பிழை",
-    
+
     today: "இன்று",
     yesterday: "நேற்று",
     daysAgo: "நாட்களுக்கு முன்பு",
+
+    // 👇 Guest user messages
+    guestWarning: "விருந்தினர் பயனர்கள் ஆர்டர்களைப் பார்க்க முடியாது",
+    guestWarningDesc: "உங்கள் ஆர்டர் வரலாற்றைப் பார்க்க தயவுசெய்து உள்நுழையவும்",
+    loginRequired: "உள்நுழைவு தேவை",
+    login: "உள்நுழைக",
+    cancel: "ரத்து",
   },
 
   // Gujarati
@@ -213,20 +242,20 @@ const translations: Record<string, any> = {
     noOrders: "હજી સુધી કોઈ ઓર્ડર નથી",
     noOrdersDesc: "સ્વાદિષ્ટ ભોજન ઓર્ડર કરવાનું શરૂ કરો!",
     browseMenu: "મેનુ બ્રાઉઝ કરો",
-    
+
     all: "બધા",
     active: "સક્રિય",
     delivered: "ડિલિવર થયેલ",
     cancelled: "રદ થયેલ",
-    
+
     orderPlaced: "ઓર્ડર આપ્યો",
     preparing: "તૈયાર થઈ રહ્યું છે",
     onTheWay: "માર્ગ પર",
-    
+
     cancel: "રદ કરો",
     reorder: "ફરીથી ઓર્ડર કરો",
     details: "વિગતો",
-    
+
     cancelTitle: "ઓર્ડર રદ કરો",
     cancelConfirm: "શું તમે ખરેખર આ ઓર્ડર રદ કરવા માંગો છો?",
     cancelSuccess: "ઓર્ડર સફળતાપૂર્વક રદ થયો",
@@ -238,20 +267,28 @@ const translations: Record<string, any> = {
     success: "સફળતા",
     itemsAdded: "વસ્તુઓ કાર્ટમાં ઉમેરાઈ!",
     error: "ભૂલ",
-    
+
     today: "આજે",
     yesterday: "ગઈકાલે",
     daysAgo: "દિવસ પહેલા",
+
+    // 👇 Guest user messages
+    guestWarning: "મહેમાન વપરાશકર્તાઓ ઓર્ડર જોઈ શકતા નથી",
+    guestWarningDesc: "તમારો ઓર્ડર ઇતિહાસ જોવા માટે કૃપા કરીને લોગિન કરો",
+    loginRequired: "લોગિન આવશ્યક છે",
+    login: "લોગિન",
+    cancel: "રદ કરો",
   },
 };
 
 export default function OrderScreen() {
   const router = useRouter();
   const { colors, mode } = useTheme();
-  
+  const { user, isGuest } = useAuth(); // 👈 Get user and isGuest from auth
+
   // 🔥 Language state
   const [language, setLanguage] = useState("en");
-  
+
   // 🔥 Translation function
   const t = (key: string) => {
     return translations[language]?.[key] || translations.en[key] || key;
@@ -268,17 +305,45 @@ export default function OrderScreen() {
   /* ================= DATA ================= */
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isGuestUser, setIsGuestUser] = useState(false);
 
   // 🔥 Load saved language
   useEffect(() => {
     loadLanguage();
+    checkUserStatus(); // 👈 Check if user is guest
   }, []);
 
   useFocusEffect(
-  useCallback(() => {
-    loadLanguage();
-  }, [])
-);
+    useCallback(() => {
+      loadLanguage();
+      checkUserStatus(); // 👈 Check on every focus
+    }, [])
+  );
+
+  // 👇 Check if user is guest
+  const checkUserStatus = async () => {
+    try {
+      const userInfo = await AsyncStorage.getItem('userInfo');
+      if (userInfo) {
+        const userData = JSON.parse(userInfo);
+        if (userData.isGuest) {
+          setIsGuestUser(true);
+          setLoading(false);
+        } else {
+          setIsGuestUser(false);
+          fetchOrders(); // 👈 Fetch orders only for logged-in users
+        }
+      } else {
+        // No user found - treat as guest
+        setIsGuestUser(true);
+        setLoading(false);
+      }
+    } catch (error) {
+      console.log('Error checking user:', error);
+      setIsGuestUser(true);
+      setLoading(false);
+    }
+  };
 
   const loadLanguage = async () => {
     try {
@@ -328,18 +393,20 @@ export default function OrderScreen() {
     ]).start();
   }, []);
 
-  useFocusEffect(
-    useCallback(() => {
-      fetchOrders();
-    }, [])
-  );
-
   const fetchOrders = async () => {
     try {
       console.log("1️⃣ FetchOrders chala");
+      setLoading(true);
 
       const token = await AsyncStorage.getItem("token");
       console.log("2️⃣ TOKEN mila:", token);
+
+      // 👇 Check if token exists
+      if (!token) {
+        console.log("No token found - user might be guest");
+        setLoading(false);
+        return;
+      }
 
       const response = await axios.get(`${BASE_URL}/api/orders/my`, {
         headers: {
@@ -348,10 +415,24 @@ export default function OrderScreen() {
       });
 
       console.log("3️⃣ API se data aaya:", response.data);
-      setOrders(response.data);
+      setOrders(response.data.orders || []);
 
-    } catch (error) {
-      console.log("❌ ORDER ERROR:", error);
+    } catch (error: any) {
+      console.log("❌ ORDER ERROR:", error.response?.data || error.message);
+
+      // If unauthorized, user might need to login
+      if (error.response?.status === 401) {
+        Alert.alert(
+          t("loginRequired"),
+          "Your session has expired. Please login again.",
+          [
+            {
+              text: t("login"),
+              onPress: () => router.push("/auth/login")
+            }
+          ]
+        );
+      }
     } finally {
       setLoading(false);
     }
@@ -393,7 +474,9 @@ export default function OrderScreen() {
 
   const onRefresh = async () => {
     setRefreshing(true);
-    await fetchOrders();
+    if (!isGuestUser) {
+      await fetchOrders();
+    }
     setRefreshing(false);
   };
 
@@ -499,12 +582,17 @@ export default function OrderScreen() {
     );
   };
 
+  // 👇 Handle login redirect for guest users
+  const handleLoginPress = () => {
+    router.push("/auth/login");
+  };
+
   // 🔥 Card Press Animation
   const animateCardPress = (index: number) => {
     if (!cardAnimations[index]) {
       cardAnimations[index] = new Animated.Value(1);
     }
-    
+
     Animated.sequence([
       Animated.timing(cardAnimations[index], {
         toValue: 0.98,
@@ -520,6 +608,69 @@ export default function OrderScreen() {
     ]).start();
   };
 
+  /* ================= RENDER GUEST VIEW ================= */
+  const renderGuestView = () => {
+    return (
+
+
+      <Animated.View
+        style={[
+          styles.guestContainer,
+          { backgroundColor: colors.background },
+          {
+            opacity: fadeAnim,
+            transform: [{ scale: scaleAnim }, { translateY: slideAnim }]
+          }
+        ]}
+      >
+        <View style={{ alignItems: "center" }}>
+          <Ionicons
+            name="person-outline"
+            size={100}
+            color={colors.subText}
+          />
+
+          <Text
+            style={[
+              styles.guestTitle,
+              { color: colors.text, marginTop: 12 },
+            ]}
+          >
+            {t("guestWarning")}
+          </Text>
+
+          <Text
+            style={[
+              styles.guestText,
+              { color: colors.subText, marginTop: 4 },
+            ]}
+          >
+            {t("guestWarningDesc")}
+          </Text>
+        </View>
+
+        <View style={styles.guestButtons}>
+          <TouchableOpacity
+            style={[styles.loginButton, { backgroundColor: colors.primary }]}
+            onPress={handleLoginPress}
+          >
+            <Ionicons name="log-in-outline" size={20} color="#fff" />
+            <Text style={styles.loginButtonText}>{t("login")}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.browseButton, { borderColor: colors.primary }]}
+            onPress={() => router.push("/")}
+          >
+            <Text style={[styles.browseButtonText, { color: colors.primary }]}>
+              {t("browseMenu")}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    );
+  };
+
   /* ================= ORDER CARD WITH ANIMATION ================= */
   const renderOrder = ({ item, index }: { item: Order; index: number }) => {
     const status = getStatus(item.status);
@@ -528,7 +679,7 @@ export default function OrderScreen() {
     // Create animation for each card
     if (!cardAnimations[index]) {
       cardAnimations[index] = new Animated.Value(0);
-      
+
       // Staggered entrance animation
       Animated.timing(cardAnimations[index], {
         toValue: 1,
@@ -555,12 +706,12 @@ export default function OrderScreen() {
     });
 
     // Translate status text
-    const statusText = 
+    const statusText =
       item.status === "Order Placed" ? t("orderPlaced") :
-      item.status === "Preparing" ? t("preparing") :
-      item.status === "On the way" ? t("onTheWay") :
-      item.status === "Delivered" ? t("delivered") :
-      t("cancelled");
+        item.status === "Preparing" ? t("preparing") :
+          item.status === "On the way" ? t("onTheWay") :
+            item.status === "Delivered" ? t("delivered") :
+              t("cancelled");
 
     return (
       <Animated.View
@@ -691,9 +842,9 @@ export default function OrderScreen() {
   /* ================= UI ================= */
   if (loading) {
     return (
-      <Animated.View style={[styles.container, { 
-        backgroundColor: colors.background, 
-        justifyContent: "center", 
+      <Animated.View style={[styles.container, {
+        backgroundColor: colors.background,
+        justifyContent: "center",
         alignItems: "center",
         opacity: fadeAnim,
         transform: [{ scale: scaleAnim }]
@@ -708,8 +859,8 @@ export default function OrderScreen() {
         }}>
           <Ionicons name="hourglass-outline" size={60} color={colors.primary} />
         </Animated.View>
-        <Animated.Text style={[styles.loadingText, { 
-          color: colors.text, 
+        <Animated.Text style={[styles.loadingText, {
+          color: colors.text,
           marginTop: 20,
           opacity: fadeAnim,
           transform: [{ translateY: slideAnim }]
@@ -720,16 +871,21 @@ export default function OrderScreen() {
     );
   }
 
+  // 👇 If guest user, show guest view
+  if (isGuestUser) {
+    return renderGuestView();
+  }
+
   return (
-    <Animated.View style={[styles.container, { 
+    <Animated.View style={[styles.container, {
       backgroundColor: colors.background,
       opacity: fadeAnim,
     }]}>
       {/* FILTER TABS with animation */}
       <Animated.View style={[
         styles.filterContainer,
-        { 
-          borderColor: colors.border, 
+        {
+          borderColor: colors.border,
           backgroundColor: colors.card,
           opacity: filterAnim,
           transform: [{
@@ -753,11 +909,11 @@ export default function OrderScreen() {
               });
 
               // Translate filter text
-              const filterText = 
+              const filterText =
                 filter === "All" ? t("all") :
-                filter === "Active" ? t("active") :
-                filter === "Delivered" ? t("delivered") :
-                t("cancelled");
+                  filter === "Active" ? t("active") :
+                    filter === "Delivered" ? t("delivered") :
+                      t("cancelled");
 
               return (
                 <Animated.View
@@ -808,7 +964,7 @@ export default function OrderScreen() {
         showsVerticalScrollIndicator={false}
         ListHeaderComponent={() => (
           sortedOrders.length > 0 ? (
-            <Animated.View 
+            <Animated.View
               style={[
                 styles.statsContainer,
                 {
@@ -829,7 +985,7 @@ export default function OrderScreen() {
           ) : null
         )}
         ListEmptyComponent={() => (
-          <Animated.View 
+          <Animated.View
             style={[
               styles.emptyState,
               {
@@ -882,15 +1038,15 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: "600",
   },
-filterContainer: {
-  borderBottomWidth: 1,
-  paddingVertical: 12,
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 1 },
-  shadowOpacity: 0.02,
-  shadowRadius: 2,
-  elevation: 1,
-},
+  filterContainer: {
+    borderBottomWidth: 1,
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.02,
+    shadowRadius: 2,
+    elevation: 1,
+  },
   filterScrollContent: {
     paddingHorizontal: 16,
     gap: 8,
@@ -920,17 +1076,17 @@ filterContainer: {
     paddingBottom: 20,
     paddingHorizontal: 16,
   },
-orderCard: {
-  borderRadius: 16,
-  marginBottom: 16,
-  borderWidth: 1,
-  overflow: "hidden",
-  shadowColor: "#000",
-  shadowOffset: { width: 0, height: 2 },
-  shadowOpacity: 0.05,
-  shadowRadius: 6,
-  elevation: 2,
-},
+  orderCard: {
+    borderRadius: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 6,
+    elevation: 2,
+  },
   orderHeader: {
     padding: 16,
   },
@@ -1046,6 +1202,65 @@ orderCard: {
   },
   startOrderButtonText: {
     color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  // 👇 Guest view styles
+  guestContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 40,
+
+    // 👇 ADD THIS
+    paddingTop: 80,
+    paddingBottom: 100,
+  },
+  guestTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    marginTop: 20,
+    marginBottom: 8,
+    textAlign: "center",
+  },
+  guestText: {
+    fontSize: 16,
+    textAlign: "center",
+    marginBottom: 30,
+    opacity: 0.8,
+  },
+  guestButtons: {
+    width: "100%",
+    gap: 12,
+  },
+  loginButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 30,
+    gap: 8,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  loginButtonText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  browseButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 30,
+    borderWidth: 2,
+    backgroundColor: "transparent",
+  },
+  browseButtonText: {
     fontSize: 16,
     fontWeight: "600",
   },

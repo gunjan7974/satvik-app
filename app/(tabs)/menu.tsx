@@ -13,15 +13,18 @@ import {
   Keyboard,
   KeyboardAvoidingView,
   Platform,
+  Alert,
 } from "react-native";
 import { ActivityIndicator } from "react-native";
 import axios from "axios";
 import { BASE_URL } from "@/config/api";
 import { Ionicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { useFocusEffect } from "@react-navigation/native";
 import Colors from "@/constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { emitCartUpdate } from "../../constants/CartEventEmitter";
 import { useTheme } from "../data/ThemeContext";
 
 const { width, height } = Dimensions.get("window");
@@ -73,6 +76,11 @@ const translations = {
     resetAllFilters: "Reset All Filters",
     category: "Category",
     addToCart: "Add to Cart",
+    add: "Add",
+    addedToCart: "Added to Cart",
+    itemAdded: "Item added to your cart",
+    guestMode: "Guest Mode",
+    loginToSync: "Login to sync your cart",
     quickFilters: {
       topRated: "Top Rated",
       lowToHigh: "₹ Low to High",
@@ -110,6 +118,11 @@ const translations = {
     resetAllFilters: "सभी फ़िल्टर रीसेट करें",
     category: "श्रेणी",
     addToCart: "कार्ट में जोड़ें",
+    add: "जोड़ें",
+    addedToCart: "कार्ट में जोड़ा गया",
+    itemAdded: "आइटम आपके कार्ट में जोड़ दिया गया है",
+    guestMode: "अतिथि मोड",
+    loginToSync: "अपना कार्ट सिंक करने के लिए लॉगिन करें",
     quickFilters: {
       topRated: "टॉप रेटेड",
       lowToHigh: "₹ कम से अधिक",
@@ -147,6 +160,11 @@ const translations = {
     resetAllFilters: "सर्व फिल्टर रीसेट करा",
     category: "श्रेणी",
     addToCart: "कार्टमध्ये जोडा",
+    add: "जोडा",
+    addedToCart: "कार्टमध्ये जोडले",
+    itemAdded: "वस्तू तुमच्या कार्टमध्ये जोडली गेली आहे",
+    guestMode: "पाहुणा मोड",
+    loginToSync: "तुमचे कार्ट सिंक करण्यासाठी लॉगिन करा",
     quickFilters: {
       topRated: "टॉप रेटेड",
       lowToHigh: "₹ कमी ते जास्त",
@@ -184,6 +202,11 @@ const translations = {
     resetAllFilters: "அனைத்து வடிப்பான்களையும் மீட்டமை",
     category: "வகை",
     addToCart: "வண்டியில் சேர்க்கவும்",
+    add: "சேர்",
+    addedToCart: "வண்டியில் சேர்க்கப்பட்டது",
+    itemAdded: "பொருள் உங்கள் வண்டியில் சேர்க்கப்பட்டது",
+    guestMode: "விருந்தினர் முறை",
+    loginToSync: "உங்கள் வண்டியை ஒத்திசைக்க உள்நுழைக",
     quickFilters: {
       topRated: "சிறந்த மதிப்பீடு",
       lowToHigh: "₹ குறைந்தது முதல் அதிகம்",
@@ -221,6 +244,11 @@ const translations = {
     resetAllFilters: "બધા ફિલ્ટર્સ રીસેટ કરો",
     category: "શ્રેણી",
     addToCart: "કાર્ટમાં ઉમેરો",
+    add: "ઉમેરો",
+    addedToCart: "કાર્ટમાં ઉમેરાયું",
+    itemAdded: "વસ્તુ તમારા કાર્ટમાં ઉમેરાઈ ગઈ છે",
+    guestMode: "મહેમાન મોડ",
+    loginToSync: "તમારું કાર્ટ સિંક કરવા માટે લૉગિન કરો",
     quickFilters: {
       topRated: "ટોપ રેટેડ",
       lowToHigh: "₹ ઓછી થી વધુ",
@@ -235,6 +263,17 @@ const translations = {
 type SortOption = 'relevance' | 'price-low' | 'price-high' | 'rating' | 'name';
 type RatingFilter = 'all' | '3.5+' | '4.0+' | '4.5+';
 type PriceFilter = 'all' | 'under-100' | '100-200' | '200+';
+
+// Guest Cart Item Type
+interface GuestCartItem {
+  _id: string;
+  foodId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image?: string;
+  category?: string;
+}
 
 // Helper function to highlight search term in text
 const HighlightText = ({ text, searchTerm, style, colors }: { text: string; searchTerm: string; style: any; colors: any }) => {
@@ -273,10 +312,13 @@ export default function MenuScreen() {
   // Language state
   const [languageCode, setLanguageCode] = useState("en");
 
-  // Load saved language from AsyncStorage
-  useEffect(() => {
-    loadLanguage();
-  }, []);
+  // Load saved language and guest cart on focus
+  useFocusEffect(
+    useCallback(() => {
+      loadLanguage();
+      loadGuestCart();
+    }, [])
+  );
 
   const loadLanguage = async () => {
     try {
@@ -284,8 +326,34 @@ export default function MenuScreen() {
       if (savedLang && translations[savedLang as keyof typeof translations]) {
         setLanguageCode(savedLang);
       }
+
+      const savedFavs = await AsyncStorage.getItem('favorites');
+      if (savedFavs) {
+        setFavorites(JSON.parse(savedFavs));
+      }
+
+      // Remove old loadGuestCart call since we now handle it in useFocusEffect directly
     } catch (error) {
-      console.log('Error loading language:', error);
+      console.log('Error loading language or favorites:', error);
+    }
+  };
+
+  const toggleFavorite = async (id: string) => {
+    try {
+      let newFavs = [...favorites];
+      if (newFavs.includes(id)) {
+        newFavs = newFavs.filter(favId => favId !== id);
+      } else {
+        newFavs.push(id);
+      }
+      setFavorites(newFavs);
+      await AsyncStorage.setItem('favorites', JSON.stringify(newFavs));
+
+      if (Platform.OS === 'ios') {
+        import('expo-haptics').then(Haptics => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light));
+      }
+    } catch (error) {
+      console.log('Error toggling favorite:', error);
     }
   };
 
@@ -314,10 +382,14 @@ export default function MenuScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchSuggestions, setSearchSuggestions] = useState<any[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [cart, setCart] = useState<any[]>([]);
+  
+  // Guest cart state
+  const [guestCart, setGuestCart] = useState<GuestCartItem[]>([]);
+  
   const [showItemModal, setShowItemModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
+  const [favorites, setFavorites] = useState<string[]>([]);
 
   // Filter states
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -394,6 +466,30 @@ export default function MenuScreen() {
     fetchMenuItems();
   }, []);
 
+
+
+  // Load guest cart from AsyncStorage
+  const loadGuestCart = async () => {
+    try {
+      const savedCart = await AsyncStorage.getItem('guestCart');
+      if (savedCart) {
+        setGuestCart(JSON.parse(savedCart));
+      }
+    } catch (error) {
+      console.log("Error loading guest cart:", error);
+    }
+  };
+
+  // Save guest cart to AsyncStorage
+  const saveGuestCart = async (cart: GuestCartItem[]) => {
+    try {
+      await AsyncStorage.setItem('guestCart', JSON.stringify(cart));
+      setGuestCart(cart);
+    } catch (error) {
+      console.log("Error saving guest cart:", error);
+    }
+  };
+
   const fetchMenuItems = async () => {
     try {
       setLoading(true);
@@ -405,8 +501,6 @@ export default function MenuScreen() {
       }
 
       const response = await axios.get(url);
-      setMenuItems(response.data);
-
       setMenuItems(response.data);
 
     } catch (error) {
@@ -545,13 +639,67 @@ export default function MenuScreen() {
     setShowItemModal(true);
   };
 
+  // Add to guest cart function
+  const addToGuestCart = (item: any, qty: number = 1) => {
+    const existingItemIndex = guestCart.findIndex(cartItem => cartItem.foodId === item._id);
+    
+    let updatedCart: GuestCartItem[];
+    
+    if (existingItemIndex >= 0) {
+      // Update existing item
+      updatedCart = [...guestCart];
+      updatedCart[existingItemIndex] = {
+        ...updatedCart[existingItemIndex],
+        quantity: updatedCart[existingItemIndex].quantity + qty
+      };
+    } else {
+      // Add new item
+      const newItem: GuestCartItem = {
+        _id: Date.now().toString(), // Temporary ID for guest cart
+        foodId: item._id,
+        name: item.name,
+        price: item.price,
+        quantity: qty,
+        image: item.image,
+        category: item.category
+      };
+      updatedCart = [...guestCart, newItem];
+    }
+    
+    saveGuestCart(updatedCart);
+    
+    const updatedCount = updatedCart.reduce((sum, cartItem) => sum + cartItem.quantity, 0);
+    emitCartUpdate(updatedCount);
+    
+    // Show success message
+    Alert.alert("Success", `${item.name} (x${qty}) ${t('addedToCart')}`);
+    
+    // Optional: Haptic feedback
+    if (Platform.OS === 'ios') {
+      import('expo-haptics').then(Haptics => 
+        Haptics.notificationAsync(Haptics.NotificationFeedbackStyle.Success)
+      );
+    }
+  };
+
+  // Modified addToCart function for guest users
   const addToCart = async (item: any) => {
     try {
       const token = await AsyncStorage.getItem("token");
 
-      console.log("FOOD ID:", item._id);
-      console.log("QUANTITY:", quantity);
+      if (!token) {
+        // Guest user - save to local storage
+        addToGuestCart(item, quantity);
+        
+        setShowItemModal(false);
+        setQuantity(1);
+        
+        // Navigate to cart
+        router.push("/cart");
+        return;
+      }
 
+      // Logged in user - add to server cart
       await axios.post(
         `${BASE_URL}/api/cart`,
         {
@@ -565,29 +713,107 @@ export default function MenuScreen() {
         }
       );
 
-      console.log("ITEM ADDED TO CART");
+      // 🔥 update cart badge live
+      const currentCount = await AsyncStorage.getItem("cartCount");
+      const newCount = currentCount ? JSON.parse(currentCount) + quantity : quantity;
+      await emitCartUpdate(newCount);
 
       setShowItemModal(false);
       setQuantity(1);
+      
+      // Show success message for logged in user
+      Alert.alert("Success", `${item.name} (x${quantity}) ${t('addedToCart')}`);
+      
       router.push("/cart");
 
     } catch (error: any) {
       console.log("CART ERROR:", error.response?.data || error.message);
+      
+      // Handle 401 error
+      if (error.response?.status === 401) {
+        Alert.alert(
+          "Session Expired",
+          "Please login again",
+          [
+            { text: "OK", onPress: () => router.push("/login") }
+          ]
+        );
+      }
+    }
+  };
+
+  // Updated function for the "Add" button (Quick add to cart for guest)
+  const addOrder = async (item) => {
+    try {
+      const token = await AsyncStorage.getItem("token");
+
+      if (!token) {
+        // Guest user - quick add
+        addToGuestCart(item, quantity);
+        
+        setShowItemModal(false);
+        setSelectedItem(null);
+        setQuantity(1);
+        
+        Alert.alert(t('addedToCart'), `${item.name} ${t('itemAdded')}`);
+        return;
+      }
+
+      // Logged in user - add to server cart
+      await axios.post(
+        `${BASE_URL}/api/cart`,
+        {
+          foodId: item._id,
+          quantity: quantity
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      );
+
+      // 🔥 update cart badge live
+      const currentCount = await AsyncStorage.getItem("cartCount");
+      const newCount = currentCount ? JSON.parse(currentCount) + quantity : quantity;
+      await emitCartUpdate(newCount);
+
+        Alert.alert(t('addedToCart'), `${item.name} ${t('itemAdded')}`);
+
+      setShowItemModal(false);
+      setSelectedItem(null);
+      setQuantity(1);
+
+    } catch (error) {
+      console.log("QUICK ADD ERROR:", error.response?.data || error.message);
+      
+      if (error.response?.status === 401) {
+        Alert.alert(
+          "Session Expired",
+          "Please login again",
+          [
+            { text: "OK", onPress: () => router.push("/login") }
+          ]
+        );
+      } else {
+        Alert.alert("Error", "Could not add item to cart. Please try again.");
+      }
     }
   };
 
   const updateQuantity = (_id: string, delta: number) => {
-    setCart(prev =>
-      prev.map(item =>
-        item._id === _id
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
-          : item
-      )
+    // Update guest cart quantity
+    const updatedCart = guestCart.map(item =>
+      item._id === _id
+        ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+        : item
     );
+    saveGuestCart(updatedCart);
   };
 
   const removeFromCart = (id: string) => {
-    setCart(prev => prev.filter(item => item._id !== id));
+    const updatedCart = guestCart.filter(item => item._id !== id);
+    saveGuestCart(updatedCart);
   };
 
   // Reset all filters
@@ -669,7 +895,7 @@ export default function MenuScreen() {
                 onPress={() => {
                   setSelectedItem(item);
                   setQuantity(1);
-                  addToCart(item);
+                  setShowItemModal(true);
                 }}
                 activeOpacity={0.8}
               >
@@ -746,6 +972,10 @@ export default function MenuScreen() {
     }
   };
 
+  // Calculate cart total for display
+  const cartTotal = guestCart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const cartItemCount = guestCart.reduce((sum, item) => sum + item.quantity, 0);
+
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background }]}
@@ -760,6 +990,9 @@ export default function MenuScreen() {
           }
         ]}
       >
+        {/* ===== SUCCESS MESSAGE ===== */}
+
+
         {/* ===== SEARCH BAR ===== */}
         <View style={styles.searchSection}>
           <View style={[styles.searchBox, {
@@ -809,10 +1042,12 @@ export default function MenuScreen() {
                 backgroundColor: colors.card,
                 borderColor: colors.border,
                 opacity: suggestionAnim,
-                transform: [{ translateY: suggestionAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [10, 0]
-                }) }]
+                transform: [{
+                  translateY: suggestionAnim.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [10, 0]
+                  })
+                }]
               }
             ]}>
               <View style={[styles.suggestionsHeader, { borderBottomColor: colors.border }]}>
@@ -1042,7 +1277,6 @@ export default function MenuScreen() {
             </TouchableOpacity>
           </View>
         ) : (
-          // 🔥 FIX: Always use numColumns={1} for full cards, numColumns={2} for compact
           <FlatList
             data={itemsToDisplay}
             key={compactView ? "compact" : "full"}
@@ -1058,7 +1292,8 @@ export default function MenuScreen() {
             maxToRenderPerBatch={6}
             windowSize={10}
             removeClippedSubviews={true}
-          />)}
+          />
+        )}
 
         {/* ===== FILTERS MODAL ===== */}
         <Modal
@@ -1237,7 +1472,7 @@ export default function MenuScreen() {
           </View>
         </Modal>
 
-        {/* ===== ITEM MODAL ===== */}
+        {/* ===== ITEM MODAL WITH GUEST SUPPORT ===== */}
         {selectedItem && (
           <Modal
             transparent
@@ -1246,92 +1481,101 @@ export default function MenuScreen() {
             onRequestClose={() => {
               setShowItemModal(false);
               setSelectedItem(null);
+              setQuantity(1);
             }}
           >
-            <Animated.View
-              style={[
-                styles.modalOverlay,
-                { opacity: fadeAnim }
-              ]}
-            >
-              <Animated.View
-                style={[
-                  styles.modalContent,
-                  {
-                    backgroundColor: colors.card,
-                    transform: [{ translateY: slideAnim }]
-                  }
-                ]}
-              >
-                <Image
-                  source={{
-                    uri:
-                      selectedItem?.image &&
-                        selectedItem.image.startsWith("http")
-                        ? selectedItem.image
-                        : "https://via.placeholder.com/150",
-                  }}
-                  style={styles.modalImage}
-                />
+            <View style={styles.modalOverlay}>
+              <TouchableOpacity
+                style={StyleSheet.absoluteFill}
+                activeOpacity={1}
+                onPress={() => {
+                  setShowItemModal(false);
+                  setSelectedItem(null);
+                  setQuantity(1);
+                }}
+              />
 
-                <View style={styles.modalHeader}>
-                  <View>
-                    <Text style={[styles.modalItemName, { color: colors.text }]}>{selectedItem.name}</Text>
-                    <Text style={[styles.modalItemDescription, { color: colors.subText }]}>{selectedItem.description}</Text>
+              <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                {/* Item Name */}
+                <Text style={[styles.modalItemName, { color: colors.text }]}>
+                  {selectedItem.name}
+                </Text>
+
+                {/* Description */}
+                <Text style={[styles.modalItemDescription, { color: colors.subText }]}>
+                  {selectedItem.description}
+                </Text>
+
+                {/* Rating */}
+                <View style={styles.modalRatingContainer}>
+                  <View style={styles.starContainer}>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Ionicons
+                        key={star}
+                        name={star <= (selectedItem.rating || 4) ? "star" : "star-outline"}
+                        size={16}
+                        color={star <= (selectedItem.rating || 4) ? "#FFD700" : colors.border}
+                      />
+                    ))}
                   </View>
-                  <TouchableOpacity
-                    style={styles.modalCloseButton}
-                    onPress={() => {
-                      setShowItemModal(false);
-                      setSelectedItem(null);
-                    }}
-                  >
-                    <Ionicons name="close" size={24} color={colors.text} />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.modalInfo}>
-                  <View style={styles.modalRating}>
-                    {renderStars(selectedItem.rating)}
-                    <Text style={[styles.modalRatingText, { color: colors.text }]}>
-                      {(selectedItem.rating || 4).toFixed(1)}
-                    </Text>
-                  </View>
-
-                  <Text style={[styles.modalCategory, { color: colors.subText }]}>
-                    {t('category')}: <Text style={[styles.modalCategoryText, { color: colors.primary }]}>{selectedItem.category}</Text>
+                  <Text style={[styles.modalRatingText, { color: colors.text }]}>
+                    {(selectedItem.rating || 4).toFixed(1)}
                   </Text>
                 </View>
 
-                <View style={styles.modalActions}>
-                  <View style={[styles.quantitySelector, { backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8' }]}>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => setQuantity(Math.max(1, quantity - 1))}
-                    >
-                      <Ionicons name="remove" size={20} color={colors.text} />
-                    </TouchableOpacity>
-                    <Text style={[styles.quantityText, { color: colors.text }]}>{quantity}</Text>
-                    <TouchableOpacity
-                      style={styles.quantityButton}
-                      onPress={() => setQuantity(quantity + 1)}
-                    >
-                      <Ionicons name="add" size={20} color={colors.text} />
-                    </TouchableOpacity>
-                  </View>
+                {/* Category */}
+                <View style={styles.modalCategoryContainer}>
+                  <Text style={[styles.modalCategoryLabel, { color: colors.subText }]}>
+                    {t('category')}:{" "}
+                  </Text>
+                  <Text style={[styles.modalCategoryValue, { color: colors.primary }]}>
+                    {selectedItem.category}
+                  </Text>
+                </View>
+
+                {/* Quantity Selector - Image Style */}
+                <View style={styles.imageStyleQuantityContainer}>
+                  <TouchableOpacity
+                    style={[styles.imageStyleQuantityBtn, { borderColor: colors.border }]}
+                    onPress={() => setQuantity(Math.max(1, quantity - 1))}
+                  >
+                    <Text style={[styles.imageStyleQuantityBtnText, { color: colors.text }]}>-</Text>
+                  </TouchableOpacity>
+
+                  <Text style={[styles.imageStyleQuantityText, { color: colors.text }]}>
+                    {quantity}
+                  </Text>
 
                   <TouchableOpacity
-                    style={[styles.addToCartButton, { backgroundColor: colors.primary }]}
+                    style={[styles.imageStyleQuantityBtn, { borderColor: colors.border }]}
+                    onPress={() => setQuantity(quantity + 1)}
+                  >
+                    <Text style={[styles.imageStyleQuantityBtnText, { color: colors.text }]}>+</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {/* Action Buttons - Image Style */}
+                <View style={styles.imageStyleActionContainer}>
+                  <TouchableOpacity
+                    style={[styles.imageStyleAddBtn, { borderColor: colors.border }]}
+                    onPress={() => addOrder(selectedItem)}
+                  >
+                    <Text style={[styles.imageStyleAddBtnText, { color: colors.text }]}>
+                      {t('add')}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.imageStyleAddToCartBtn, { backgroundColor: colors.primary }]}
                     onPress={() => addToCart(selectedItem)}
                   >
-                    <Ionicons name="cart" size={20} color="#FFFFFF" />
-                    <Text style={styles.addToCartButtonText}>
-                      {t('itemModal.addToCart')} • ₹{selectedItem.price}
+                    <Text style={styles.imageStyleAddToCartBtnText}>
+                      {t('addToCart')} • ₹{selectedItem.price * quantity}
                     </Text>
                   </TouchableOpacity>
                 </View>
-              </Animated.View>
-            </Animated.View>
+              </View>
+            </View>
           </Modal>
         )}
       </Animated.View>
@@ -1343,6 +1587,32 @@ export default function MenuScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+  },
+
+  // Success Message
+  successMessage: {
+    position: 'absolute',
+    top: 50,
+    left: 20,
+    right: 20,
+    zIndex: 2000,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  successMessageText: {
+    color: '#FFF',
+    fontSize: 14,
+    fontWeight: '600',
+    marginLeft: 8,
   },
 
   // Search Section
@@ -1725,6 +1995,35 @@ const styles = StyleSheet.create({
     height: 6,
     borderRadius: 3,
   },
+  favoriteBadgeCompact: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  favoriteBadgeFull: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+  },
 
   // Empty State
   emptyContainer: {
@@ -1753,7 +2052,7 @@ const styles = StyleSheet.create({
   // Filters Modal Styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'transparent',
+    backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
   filtersModalContent: {
@@ -1841,89 +2140,124 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
 
-  // Item Modal Styles
+  // New Item Modal Styles
   modalContent: {
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: height * 0.8,
-  },
-  modalImage: {
-    width: '100%',
-    height: 200,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    marginBottom: 12,
+    padding: 24,
+    paddingBottom: Platform.OS === 'ios' ? 40 : 24,
   },
   modalItemName: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: '700',
     marginBottom: 8,
   },
   modalItemDescription: {
-    fontSize: 15,
-    lineHeight: 20,
-  },
-  modalCloseButton: {
-    padding: 4,
-  },
-  modalInfo: {
+    fontSize: 16,
     marginBottom: 20,
+    lineHeight: 22,
   },
-  modalRating: {
+  modalRatingContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   modalRatingText: {
     fontSize: 16,
     fontWeight: '600',
-    marginLeft: 8,
+    marginLeft: 12,
   },
-  modalCategory: {
-    fontSize: 14,
-  },
-  modalCategoryText: {
-    fontWeight: '600',
-  },
-  modalActions: {
+  modalCategoryContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
+    marginBottom: 24,
   },
-  quantitySelector: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderRadius: 8,
-    padding: 8,
+  modalCategoryLabel: {
+    fontSize: 16,
   },
-  quantityButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+  modalCategoryValue: {
+    fontSize: 16,
+    fontWeight: '700',
   },
-  quantityText: {
-    fontSize: 18,
-    fontWeight: '600',
-    paddingHorizontal: 16,
-  },
-  addToCartButton: {
-    flex: 1,
+
+  // Image Style Buttons (Exactly as shown in the image)
+  imageStyleQuantityContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 16,
-    borderRadius: 8,
-    marginLeft: 12,
-    gap: 8,
+    marginBottom: 20,
+    gap: 20,
   },
-  addToCartButtonText: {
+
+  imageStyleQuantityBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+
+  imageStyleQuantityBtnText: {
+    fontSize: 24,
+    fontWeight: '500',
+    lineHeight: 28,
+  },
+
+  imageStyleQuantityText: {
+    fontSize: 20,
+    fontWeight: '600',
+    minWidth: 30,
+    textAlign: 'center',
+  },
+
+  imageStyleActionContainer: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+
+  imageStyleAddBtn: {
+    flex: 1,
+    height: 52,
+    borderRadius: 8,
+    borderWidth: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+
+  imageStyleAddBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+  },
+
+  imageStyleAddToCartBtn: {
+    flex: 2,
+    height: 52,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  imageStyleAddToCartBtnText: {
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+
+  modalAddToCartButton: {
+    flex: 2,
+    height: 54,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalAddToCartButtonText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
   },
 });

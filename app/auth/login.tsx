@@ -23,35 +23,98 @@ import { FadeIn, FadeInDown } from "react-native-reanimated";
 
 import { useAuth } from "../data/AuthContext";
 import { BASE_URL } from "../../config/api";
+
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
 
 export default function Login() {
   const router = useRouter();
+  const { login, loginGuest, logout, user } = useAuth();
 
-useEffect(() => {
-  const backAction = () => {
-    router.replace("/");
-    return true; 
-  };
-
-  const backHandler = BackHandler.addEventListener(
-    "hardwareBackPress",
-    backAction
-  );
-
-  return () => backHandler.remove();
-}, []);
-
-  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
+  // Check if user is already logged in
+  useEffect(() => {
+    checkExistingUser();
+  }, []);
+
+  const checkExistingUser = async () => {
+  try {
+
+    const userInfo = await AsyncStorage.getItem("userInfo");
+
+    if (!userInfo) return;
+
+    const parsedUser = JSON.parse(userInfo);
+
+    // अगर guest है तो login page open रहने दो
+    if (parsedUser.isGuest) return;
+
+    // अगर real user login है तभी home भेजो
+    router.replace("/");
+
+  } catch (error) {
+    console.log("User check error:", error);
+  }
+};
+
+  // Back button handler
+  useEffect(() => {
+    const backAction = () => {
+      handleBackPress();
+      return true;
+    };
+
+    const backHandler = BackHandler.addEventListener(
+      "hardwareBackPress",
+      backAction
+    );
+
+    return () => backHandler.remove();
+  }, []);
+
+  const handleBackPress = async () => {
+    try {
+
+      const userInfo = await AsyncStorage.getItem("userInfo");
+
+      if (userInfo) {
+        router.replace("/");
+      } else {
+        handleGuestLogin();
+      }
+
+    } catch (error) {
+      console.log("Back press error:", error);
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await logout(); // AuthContext ka logout call karo
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
+
   const handleLogin = async () => {
-    if (!email.trim() || !password.trim()) {
-      Alert.alert("Error", "Please fill all fields");
+    // Validation
+    if (!email.trim()) {
+      Alert.alert("Error", "Please enter your email");
+      return;
+    }
+    if (!password.trim()) {
+      Alert.alert("Error", "Please enter your password");
+      return;
+    }
+
+    // Email format validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      Alert.alert("Error", "Please enter a valid email address");
       return;
     }
 
@@ -61,7 +124,7 @@ useEffect(() => {
       const response = await axios.post(
         `${BASE_URL}/api/auth/login`,
         {
-          email: email.trim(),
+          email: email.trim().toLowerCase(),
           password: password.trim(),
         }
       );
@@ -70,40 +133,106 @@ useEffect(() => {
 
       console.log("Login Success:", userData);
 
-      // ðŸ” Save token
-      await AsyncStorage.setItem("token", userData.token);
+      // Add isGuest flag to user data
+      const userWithGuestFlag = {
+        ...userData,
+        isGuest: false,
+        lastLogin: new Date().toISOString()
+      };
 
-      // ðŸ’¾ Save full user data
-      await AsyncStorage.setItem("userInfo", JSON.stringify(userData));
+      // Save token
+      if (userData.token) {
+        await AsyncStorage.setItem("token", userData.token);
+      }
 
-      // ðŸ§  Update Auth Context
-      await login(userData);
+      // Save full user data
+      await AsyncStorage.setItem("userInfo", JSON.stringify(userWithGuestFlag));
 
-      // ðŸš€ Redirect to Home
-      router.replace("/");
+      // Update Auth Context
+      await login(userWithGuestFlag);
+
+      // Show success message
+      Alert.alert(
+        "Success",
+        `Welcome back, ${userData.name || 'User'}!`,
+        [
+          {
+            text: "Continue",
+            onPress: () => router.replace("/")
+          }
+        ]
+      );
 
     } catch (error) {
-      console.log("Login Error:", error.response?.data);
+      console.log("Login Error:", error.response?.data || error.message);
+
+      let errorMessage = "Invalid email or password";
+
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.status === 401) {
+        errorMessage = "Invalid credentials";
+      } else if (error.response?.status === 404) {
+        errorMessage = "User not found";
+      } else if (error.code === 'ECONNABORTED') {
+        errorMessage = "Connection timeout. Please try again";
+      } else if (!error.response) {
+        errorMessage = "Network error. Check your connection";
+      }
 
       Alert.alert(
         "Login Failed",
-        error.response?.data?.message || "Invalid email or password"
+        errorMessage,
+        [{ text: "Try Again" }]
       );
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleGuestLogin = async () => {
+    try {
+      setIsLoading(true);
 
-  const handleGuestLogin = () => {
+      const guestUserData = {
+        _id: "guest_user",
+        name: "Guest User",
+        initials: "SK",
+        email: "guest@sattvikkaleva.com",
+        isGuest: true,
+        avatar: null
+      };
+
+      // remove old token
+      await AsyncStorage.removeItem("token");
+
+      // save guest info
+      await AsyncStorage.setItem("userInfo", JSON.stringify(guestUserData));
+
+      // update auth context
+      await loginGuest(guestUserData);
+
+      router.replace("/");
+
+    } catch (error) {
+      console.log("Guest login error:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleForgotPassword = () => {
     Alert.alert(
-      "Continue as Guest",
-      "You can browse the menu, but ordering requires login",
+      "Forgot Password?",
+      "Please contact support or use 'Forgot Password' option",
       [
         { text: "Cancel", style: "cancel" },
         {
-          text: "Continue",
-          onPress: () => router.push("/")
+          text: "Contact Support",
+          onPress: () => {
+            // Add your support contact logic here
+            Alert.alert("Support", "Please email: support@sattvikkaleva.com");
+          }
         }
       ]
     );
@@ -126,14 +255,16 @@ useEffect(() => {
           >
             <TouchableOpacity
               style={styles.backButton}
-              onPress={() => router.replace("/")}>
+              onPress={handleBackPress}>
               <Ionicons name="arrow-back" size={24} color="#FF8A00" />
             </TouchableOpacity>
 
             <View style={styles.logoContainer}>
-
               <Text style={styles.appName}>Sattvik Kaleva</Text>
             </View>
+
+            {/* Empty view for spacing */}
+            <View style={{ width: 44 }} />
           </Animated.View>
 
           {/* Main Content */}
@@ -159,11 +290,12 @@ useEffect(() => {
                   placeholderTextColor="#999"
                   keyboardType="email-address"
                   autoCapitalize="none"
+                  autoComplete="email"
                   value={email}
                   onChangeText={setEmail}
+                  editable={!isLoading}
                 />
               </Animated.View>
-
 
               {/* Password Input */}
               <Animated.View
@@ -180,10 +312,12 @@ useEffect(() => {
                   secureTextEntry={!showPassword}
                   value={password}
                   onChangeText={setPassword}
+                  editable={!isLoading}
                 />
                 <TouchableOpacity
                   style={styles.eyeButton}
                   onPress={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                 >
                   <Ionicons
                     name={showPassword ? "eye-off-outline" : "eye-outline"}
@@ -194,7 +328,11 @@ useEffect(() => {
               </Animated.View>
 
               {/* Forgot Password */}
-              <TouchableOpacity style={styles.forgotPassword}>
+              <TouchableOpacity
+                style={styles.forgotPassword}
+                onPress={handleForgotPassword}
+                disabled={isLoading}
+              >
                 <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
               </TouchableOpacity>
 
@@ -214,7 +352,7 @@ useEffect(() => {
                 >
                   {isLoading ? (
                     <View style={styles.loadingContainer}>
-                      <Text style={styles.loginButtonText}>Logging in...</Text>
+                      <Text style={styles.loginButtonText}>Please wait...</Text>
                     </View>
                   ) : (
                     <>
@@ -243,6 +381,7 @@ useEffect(() => {
                 <TouchableOpacity
                   style={styles.googleButton}
                   onPress={() => Alert.alert("Coming Soon", "Google login feature coming soon!")}
+                  disabled={isLoading}
                 >
                   <Image
                     source={{ uri: "https://cdn-icons-png.flaticon.com/512/2991/2991148.png" }}
@@ -254,6 +393,7 @@ useEffect(() => {
                 <TouchableOpacity
                   style={styles.guestButton}
                   onPress={handleGuestLogin}
+                  disabled={isLoading}
                 >
                   <Ionicons name="person-outline" size={20} color="#FF8A00" />
                   <Text style={styles.guestButtonText}>Continue as Guest</Text>
@@ -266,7 +406,10 @@ useEffect(() => {
                 style={styles.signupContainer}
               >
                 <Text style={styles.signupText}>New to Sattvik Kaleva? </Text>
-                <TouchableOpacity onPress={() => router.push("/auth/registration")}>
+                <TouchableOpacity
+                  onPress={() => router.push("/auth/registration")}
+                  disabled={isLoading}
+                >
                   <Text style={styles.signupLink}>Create Account</Text>
                 </TouchableOpacity>
               </Animated.View>
@@ -313,11 +456,6 @@ const styles = StyleSheet.create({
   logoContainer: {
     alignItems: 'center',
     flex: 1,
-  },
-  logo: {
-    width: 60,
-    height: 60,
-    resizeMode: 'contain',
   },
   appName: {
     fontSize: isSmallDevice ? 18 : 20,

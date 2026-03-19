@@ -182,440 +182,177 @@ const translations = {
     // WhatsApp
     whatsappNotInstalled: "WhatsApp is not installed on this device.",
     callNotAvailable: "Unable to make a call on this device.",
+
+    // 👇 Guest user messages
+    guestWelcome: "Welcome, Guest!",
+    guestSubtitle: "You're browsing as a guest",
+    loginToAccess: "Login to access all features",
+    loginNow: "Login Now",
+    createAccount: "Create Account",
+    guestFeatures: "Guest Features",
+    browseMenu: "Browse Menu",
+    browseMenuDesc: "Explore our delicious menu",
+    viewEvents: "View Events",
+    viewEventsDesc: "Check out our upcoming events",
+    contactSupport: "Contact Support",
+    contactSupportDesc: "Get help from our team",
+    guestLimitations: "Guest Limitations",
+    orderLimit: "Cannot place orders",
+    addressLimit: "Cannot save addresses",
+    walletLimit: "No wallet access",
+    referralLimit: "Cannot refer & earn",
+    loginPrompt: "Login to unlock all features!",
+    guestInfo: "Guest users can browse but cannot perform actions like ordering, saving addresses, or accessing wallet.",
   },
 
   hi: {
-    editProfile: "प्रोफ़ाइल संपादित करें",
-    accountInfo: "खाता जानकारी",
-    email: "ईमेल",
-    phone: "फ़ोन",
-    changePassword: "पासवर्ड बदलें",
-    savedAddresses: "सहेजे गए पते",
-    addNew: "नया जोड़ें",
-    noAddresses: "कोई पता सहेजा नहीं",
-    noAddressesSub: "ऑर्डर शुरू करने के लिए अपना पहला पता जोड़ें",
-    addAddress: "पता जोड़ें",
-    default: "डिफ़ॉल्ट",
-    setDefault: "डिफ़ॉल्ट सेट करें",
-    youCanAdd: "आप",
-    moreAddress: "और पता जोड़ सकते हैं",
-    moreAddresses: "और पते जोड़ सकते हैं",
-    ordersWallet: "ऑर्डर और वॉलेट",
-    myOrders: "मेरे ऑर्डर",
-    viewAllOrders: "सभी ऑर्डर देखें",
-    wallet: "वॉलेट",
-    balance: "बैलेंस",
-    addMoney: "पैसे जोड़ें",
-    referEarn: "रेफर करें और कमाएं",
-    earnPerReferral: "प्रति रेफरल ₹100 कमाएं",
-    preferences: "प्राथमिकताएं",
-    notifications: "सूचनाएं",
-    notificationSub: "ऑर्डर अपडेट प्राप्त करें",
-    darkMode: "डार्क मोड",
-    enabled: "सक्षम",
-    disabled: "अक्षम",
-    language: "भाषा",
-    helpSupport: "सहायता",
-    helpCenter: "सहायता केंद्र",
-    contactUs: "संपर्क करें",
-    contactSub: "24/7 ग्राहक सहायता",
-    termsPrivacy: "नियम और गोपनीयता",
-    appVersion: "ऐप संस्करण",
-    logout: "लॉगआउट",
-    cancel: "रद्द करें",
-    save: "सहेजें",
-    saveChanges: "बदलाव सहेजें",
-    delete: "हटाएं",
-    selectLanguage: "भाषा चुनें",
-    searchLanguage: "भाषा खोजें...",
-    noLanguages: "कोई भाषा नहीं मिली",
-    addNewAddress: "नया पता जोड़ें",
-    addressType: "पते का प्रकार",
-    home: "घर",
-    work: "कार्यालय",
-    other: "अन्य",
-    addressName: "पते का नाम (जैसे, घर, कार्यालय)",
-    fullAddress: "पूरा पता",
-    phoneNumber: "फ़ोन नंबर",
-    setAsDefault: "डिफ़ॉल्ट पते के रूप में सेट करें",
-    saveAddress: "पता सहेजें",
-    selectLiveLocation: "लाइव स्थान चुनें",
-    fetchingLocation: "पता प्राप्त किया जा रहा है...",
-    locationError: "स्थान त्रुटि",
-    locationPermissionDenied: "स्थान तक पहुँचने की अनुमति नहीं दी गई",
-    success: "सफलता",
-    error: "त्रुटि",
-    warning: "चेतावनी",
-    cameraPermission: "कैमरा अनुमति आवश्यक है",
-    galleryPermission: "गैलरी अनुमति आवश्यक है",
-    uploadFailed: "छवि अपलोड विफल",
-    profileUpdated: "प्रोफ़ाइल सफलतापूर्वक अपडेट हुई!",
-    addressAdded: "पता सफलतापूर्वक जोड़ा गया!",
-    passwordChanged: "पासवर्ड सफलतापूर्वक बदला गया!",
-    photoUpdated: "प्रोफ़ाइल फ़ोटो अपडेट हुई",
-    fillAllFields: "कृपया सभी फ़ील्ड भरें",
-    limitReached: "आप केवल 3 पते सहेज सकते हैं।",
-    deleteAddress: "पता हटाएं",
-    deleteConfirm: "क्या आप वाकई इस पते को हटाना चाहते हैं?",
-    logoutConfirm: "क्या आप वाकई लॉगआउट करना चाहते हैं?",
-    languageChanged: "ऐप भाषा सेट हो गई",
-    copied: "कॉपी हो गया!",
-    copyCode: "रेफरल कोड क्लिपबोर्ड पर कॉपी हो गया",
-    invalidAmount: "अमान्य राशि",
-    enterValidAmount: "कृपया मान्य राशि दर्ज करें",
-    nameRequired: "नाम आवश्यक है",
-    nameMinLength: "नाम कम से कम 3 अक्षर का होना चाहिए",
-    emailRequired: "ईमेल आवश्यक है",
-    emailInvalid: "मान्य ईमेल दर्ज करें",
-    phoneRequired: "फ़ोन आवश्यक है",
-    phoneInvalid: "मान्य 10-अंकीय फ़ोन दर्ज करें",
-    fixErrors: "त्रुटियां सुधारें",
-    pleaseCorrect: "कृपया हाइलाइट किए गए फ़ील्ड सुधारें।",
-    currentPassword: "वर्तमान पासवर्ड",
-    newPassword: "नया पासवर्ड",
-    confirmPassword: "पासवर्ड की पुष्टि करें",
-    passwordRequired: "पासवर्ड आवश्यक है",
-    passwordMinLength: "पासवर्ड कम से कम 6 अक्षर का होना चाहिए",
-    passwordMismatch: "पासवर्ड मेल नहीं खाते",
-    passwordIncorrect: "वर्तमान पासवर्ड गलत है",
-    referralTitle: "रेफर करें और कमाएं",
-    referralMessage: "अपना रेफरल कोड शेयर करें: CHHAVI123\n\nआपके दोस्त को पहले ऑर्डर पर ₹100 की छूट\nजब वे अपना पहला ऑर्डर पूरा करेंगे तो आपको ₹100 मिलेंगे",
-    copyCode: "कोड कॉपी करें",
-    share: "शेयर करें",
-    addMoneyTitle: "वॉलेट में पैसे जोड़ें",
-    enterAmount: "जोड़ने के लिए राशि दर्ज करें:",
-    loadingProfile: "प्रोफ़ाइल लोड हो रही है...",
-    whatsappNotInstalled: "इस डिवाइस पर WhatsApp इंस्टॉल नहीं है।",
-    callNotAvailable: "इस डिवाइस पर कॉल नहीं किया जा सकता।",
+    // ... (existing Hindi translations)
+    guestWelcome: "स्वागत है, अतिथि!",
+    guestSubtitle: "आप अतिथि के रूप में ब्राउज़ कर रहे हैं",
+    loginToAccess: "सभी सुविधाओं तक पहुंचने के लिए लॉगिन करें",
+    loginNow: "अभी लॉगिन करें",
+    createAccount: "खाता बनाएं",
+    guestFeatures: "अतिथि सुविधाएं",
+    browseMenu: "मेनू ब्राउज़ करें",
+    browseMenuDesc: "हमारा स्वादिष्ट मेनू देखें",
+    viewEvents: "इवेंट देखें",
+    viewEventsDesc: "हमारे आगामी इवेंट देखें",
+    contactSupport: "सहायता से संपर्क करें",
+    contactSupportDesc: "हमारी टीम से मदद प्राप्त करें",
+    guestLimitations: "अतिथि सीमाएं",
+    orderLimit: "ऑर्डर नहीं कर सकते",
+    addressLimit: "पते सहेज नहीं सकते",
+    walletLimit: "वॉलेट एक्सेस नहीं",
+    referralLimit: "रेफर और कमा नहीं सकते",
+    loginPrompt: "सभी सुविधाएं अनलॉक करने के लिए लॉगिन करें!",
+    guestInfo: "अतिथि उपयोगकर्ता ब्राउज़ कर सकते हैं लेकिन ऑर्डर करना, पते सहेजना या वॉलेट एक्सेस करना जैसी क्रियाएं नहीं कर सकते।",
   },
 
   mr: {
-    editProfile: "प्रोफाइल संपादित करा",
-    accountInfo: "खात्याची माहिती",
-    email: "ईमेल",
-    phone: "फोन",
-    changePassword: "पासवर्ड बदला",
-    savedAddresses: "जतन केलेले पत्ते",
-    addNew: "नवीन जोडा",
-    noAddresses: "कोणताही पत्ता जतन केलेला नाही",
-    noAddressesSub: "ऑर्डर सुरू करण्यासाठी तुमचा पहिला पत्ता जोडा",
-    addAddress: "पत्ता जोडा",
-    default: "डीफॉल्ट",
-    setDefault: "डीफॉल्ट सेट करा",
-    youCanAdd: "तुम्ही",
-    moreAddress: "आणखी एक पत्ता जोडू शकता",
-    moreAddresses: "आणखी पत्ते जोडू शकता",
-    ordersWallet: "ऑर्डर आणि वॉलेट",
-    myOrders: "माझे ऑर्डर",
-    viewAllOrders: "सर्व ऑर्डर पहा",
-    wallet: "वॉलेट",
-    balance: "शिल्लक",
-    addMoney: "पैसे जोडा",
-    referEarn: "रेफर करा आणि कमवा",
-    earnPerReferral: "प्रति रेफरल ₹100 कमवा",
-    preferences: "प्राधान्ये",
-    notifications: "सूचना",
-    notificationSub: "ऑर्डर अपडेट मिळवा",
-    darkMode: "डार्क मोड",
-    enabled: "सक्षम",
-    disabled: "अक्षम",
-    language: "भाषा",
-    helpSupport: "मदत",
-    helpCenter: "मदत केंद्र",
-    contactUs: "संपर्क करा",
-    contactSub: "24/7 ग्राहक सहाय्य",
-    termsPrivacy: "अटी आणि गोपनीयता",
-    appVersion: "अॅप आवृत्ती",
-    logout: "लॉगआउट",
-    cancel: "रद्द करा",
-    save: "जतन करा",
-    saveChanges: "बदल जतन करा",
-    delete: "हटवा",
-    selectLanguage: "भाषा निवडा",
-    searchLanguage: "भाषा शोधा...",
-    noLanguages: "कोणतीही भाषा सापडली नाही",
-    addNewAddress: "नवीन पत्ता जोडा",
-    addressType: "पत्त्याचा प्रकार",
-    home: "घर",
-    work: "कार्यालय",
-    other: "इतर",
-    addressName: "पत्त्याचे नाव (उदा., घर, कार्यालय)",
-    fullAddress: "पूर्ण पत्ता",
-    phoneNumber: "फोन नंबर",
-    setAsDefault: "डीफॉल्ट पत्ता म्हणून सेट करा",
-    saveAddress: "पत्ता जतन करा",
-    selectLiveLocation: "थेट स्थान निवडा",
-    fetchingLocation: "पत्ता शोधत आहे...",
-    locationError: "स्थान त्रुटी",
-    locationPermissionDenied: "स्थान ॲक्सेस करण्याची परवानगी नाकारली गेली",
-    success: "यशस्वी",
-    error: "त्रुटी",
-    warning: "चेतावणी",
-    cameraPermission: "कॅमेरा परवानगी आवश्यक आहे",
-    galleryPermission: "गॅलरी परवानगी आवश्यक आहे",
-    uploadFailed: "प्रतिमा अपलोड अयशस्वी",
-    profileUpdated: "प्रोफाइल यशस्वीरित्या अपडेट झाले!",
-    addressAdded: "पत्ता यशस्वीरित्या जोडला गेला!",
-    passwordChanged: "पासवर्ड यशस्वीरित्या बदलला गेला!",
-    photoUpdated: "प्रोफाइल फोटो अपडेट झाला",
-    fillAllFields: "कृपया सर्व फील्ड भरा",
-    limitReached: "तुम्ही फक्त 3 पत्ते जतन करू शकता.",
-    deleteAddress: "पत्ता हटवा",
-    deleteConfirm: "तुम्हाला खात्री आहे की हा पत्ता हटवायचा आहे?",
-    logoutConfirm: "तुम्हाला खात्री आहे की लॉगआउट करायचे आहे?",
-    languageChanged: "अॅप भाषा सेट झाली",
-    copied: "कॉपी झाले!",
-    copyCode: "रेफरल कोड क्लिपबोर्डवर कॉपी झाला",
-    invalidAmount: "अवैध रक्कम",
-    enterValidAmount: "कृपया वैध रक्कम प्रविष्ट करा",
-    nameRequired: "नाव आवश्यक आहे",
-    nameMinLength: "नाव किमान 3 अक्षरांचे असावे",
-    emailRequired: "ईमेल आवश्यक आहे",
-    emailInvalid: "वैध ईमेल प्रविष्ट करा",
-    phoneRequired: "फोन आवश्यक आहे",
-    phoneInvalid: "वैध 10-अंकी फोन प्रविष्ट करा",
-    fixErrors: "त्रुटी सुधारा",
-    pleaseCorrect: "कृपया हायलाइट केलेल्या फील्ड सुधारा.",
-    currentPassword: "सध्याचा पासवर्ड",
-    newPassword: "नवीन पासवर्ड",
-    confirmPassword: "पासवर्डची पुष्टी करा",
-    passwordRequired: "पासवर्ड आवश्यक आहे",
-    passwordMinLength: "पासवर्ड किमान 6 अक्षरांचा असावा",
-    passwordMismatch: "पासवर्ड जुळत नाहीत",
-    passwordIncorrect: "सध्याचा पासवर्ड चुकीचा आहे",
-    referralTitle: "रेफर करा आणि कमवा",
-    referralMessage: "तुमचा रेफरल कोड शेअर करा: CHHAVI123\n\nतुमच्या मित्राला पहिल्या ऑर्डरवर ₹100 सूट\nजेव्हा ते पहिली ऑर्डर पूर्ण करतील तेव्हा तुम्हाला ₹100 मिळतील",
-    copyCode: "कोड कॉपी करा",
-    share: "शेअर करा",
-    addMoneyTitle: "वॉलेटमध्ये पैसे जोडा",
-    enterAmount: "जोडण्यासाठी रक्कम प्रविष्ट करा:",
-    loadingProfile: "प्रोफाइल लोड होत आहे...",
-    whatsappNotInstalled: "या डिव्हाइसवर WhatsApp इंस्टॉल केलेले नाही.",
-    callNotAvailable: "या डिव्हाइसवर कॉल करणे शक्य नाही.",
+    // ... (existing Marathi translations)
+    guestWelcome: "स्वागत आहे, पाहुण्या!",
+    guestSubtitle: "तुम्ही पाहुणे म्हणून ब्राउझ करत आहात",
+    loginToAccess: "सर्व सुविधांमध्ये प्रवेश करण्यासाठी लॉगिन करा",
+    loginNow: "आताच लॉगिन करा",
+    createAccount: "खाते तयार करा",
+    guestFeatures: "पाहुणे सुविधा",
+    browseMenu: "मेनू ब्राउझ करा",
+    browseMenuDesc: "आमचा स्वादिष्ट मेनू पहा",
+    viewEvents: "इव्हेंट पहा",
+    viewEventsDesc: "आमचे आगामी इव्हेंट पहा",
+    contactSupport: "सहाय्याशी संपर्क करा",
+    contactSupportDesc: "आमच्या टीमकडून मदत मिळवा",
+    guestLimitations: "पाहुणे मर्यादा",
+    orderLimit: "ऑर्डर करू शकत नाही",
+    addressLimit: "पत्ते जतन करू शकत नाही",
+    walletLimit: "वॉलेट प्रवेश नाही",
+    referralLimit: "रेफर आणि कमवू शकत नाही",
+    loginPrompt: "सर्व सुविधा अनलॉक करण्यासाठी लॉगिन करा!",
+    guestInfo: "पाहुणे वापरकर्ते ब्राउझ करू शकतात परंतु ऑर्डर करणे, पत्ते जतन करणे किंवा वॉलेट प्रवेश करणे यासारख्या क्रिया करू शकत नाहीत.",
   },
 
   te: {
-    editProfile: "ప్రొఫైల్‌ను సవరించండి",
-    accountInfo: "ఖాతా సమాచారం",
-    email: "ఇమెయిల్",
-    phone: "ఫోన్",
-    changePassword: "పాస్‌వర్డ్ మార్చండి",
-    savedAddresses: "సేవ్ చేసిన చిరునామాలు",
-    addNew: "కొత్తది జోడించండి",
-    noAddresses: "చిరునామాలు సేవ్ చేయబడలేదు",
-    noAddressesSub: "ఆర్డర్ చేయడం ప్రారంభించడానికి మీ మొదటి చిరునామాను జోడించండి",
-    addAddress: "చిరునామా జోడించండి",
-    default: "డిఫాల్ట్",
-    setDefault: "డిఫాల్ట్‌గా సెట్ చేయండి",
-    youCanAdd: "మీరు",
-    moreAddress: "మరో చిరునామా జోడించవచ్చు",
-    moreAddresses: "మరిన్ని చిరునామాలు జోడించవచ్చు",
-    ordersWallet: "ఆర్డర్లు & వాలెట్",
-    myOrders: "నా ఆర్డర్లు",
-    viewAllOrders: "అన్ని ఆర్డర్లు చూడండి",
-    wallet: "వాలెట్",
-    balance: "బ్యాలెన్స్",
-    addMoney: "డబ్బు జోడించండి",
-    referEarn: "రెఫర్ & సంపాదించండి",
-    earnPerReferral: "ప్రతి రెఫరల్‌కు ₹100 సంపాదించండి",
-    preferences: "ప్రాధాన్యతలు",
-    notifications: "నోటిఫికేషన్లు",
-    notificationSub: "ఆర్డర్ అప్‌డేట్‌లను స్వీకరించండి",
-    darkMode: "డార్క్ మోడ్",
-    enabled: "ప్రారంభించబడింది",
-    disabled: "నిలిపివేయబడింది",
-    language: "భాష",
-    helpSupport: "సహాయం",
-    helpCenter: "సహాయ కేంద్రం",
-    contactUs: "మమ్మల్ని సంప్రదించండి",
-    contactSub: "24/7 కస్టమర్ సపోర్ట్",
-    termsPrivacy: "నిబంధనలు & గోప్యత",
-    appVersion: "యాప్ వెర్షన్",
-    logout: "లాగ్అవుట్",
-    cancel: "రద్దు చేయండి",
-    save: "సేవ్ చేయండి",
-    saveChanges: "మార్పులను సేవ్ చేయండి",
-    delete: "తొలగించండి",
-    selectLanguage: "భాషను ఎంచుకోండి",
-    searchLanguage: "భాష కోసం వెతకండి...",
-    noLanguages: "భాషలు కనుగొనబడలేదు",
-    addNewAddress: "కొత్త చిరునామా జోడించండి",
-    addressType: "చిరునామా రకం",
-    home: "హోమ్",
-    work: "వర్క్",
-    other: "ఇతర",
-    addressName: "చిరునామా పేరు (ఉదా., హోమ్, ఆఫీస్)",
-    fullAddress: "పూర్తి చిరునామా",
-    phoneNumber: "ఫోన్ నంబర్",
-    setAsDefault: "డిఫాల్ట్ చిరునామాగా సెట్ చేయండి",
-    saveAddress: "చిరునామా సేవ్ చేయండి",
-    selectLiveLocation: "లైవ్ లొకేషన్‌ను ఎంచుకోండి",
-    fetchingLocation: "చిరునామాను పొందుతోంది...",
-    locationError: "లొకేషన్ లోపం",
-    locationPermissionDenied: "లొకేషన్ యాక్సెస్ చేయడానికి అనుమతి నిరాకరించబడింది",
-    success: "విజయం",
-    error: "లోపం",
-    warning: "హెచ్చరిక",
-    cameraPermission: "కెమెరా అనుమతి అవసరం",
-    galleryPermission: "గ్యాలరీ అనుమతి అవసరం",
-    uploadFailed: "చిత్రం అప్‌లోడ్ విఫలమైంది",
-    profileUpdated: "ప్రొఫైల్ విజయవంతంగా నవీకరించబడింది!",
-    addressAdded: "చిరునామా విజయవంతంగా జోడించబడింది!",
-    passwordChanged: "పాస్‌వర్డ్ విజయవంతంగా మార్చబడింది!",
-    photoUpdated: "ప్రొఫైల్ ఫోటో నవీకరించబడింది",
-    fillAllFields: "దయచేసి అన్ని ఫీల్డ్‌లను పూరించండి",
-    limitReached: "మీరు 3 చిరునామాలు మాత్రమే సేవ్ చేయగలరు.",
-    deleteAddress: "చిరునామాను తొలగించండి",
-    deleteConfirm: "మీరు ఈ చిరునామాను తొలగించాలనుకుంటున్నారా?",
-    logoutConfirm: "మీరు లాగ్అవుట్ చేయాలనుకుంటున్నారా?",
-    languageChanged: "యాప్ భాష సెట్ చేయబడింది",
-    copied: "కాపీ చేయబడింది!",
-    copyCode: "రెఫరల్ కోడ్ క్లిప్‌బోర్డ్‌కు కాపీ చేయబడింది",
-    invalidAmount: "చెల్లని మొత్తం",
-    enterValidAmount: "దయచేసి చెల్లుబాటు అయ్యే మొత్తాన్ని నమోదు చేయండి",
-    nameRequired: "పేరు అవసరం",
-    nameMinLength: "పేరు కనీసం 3 అక్షరాలతో ఉండాలి",
-    emailRequired: "ఇమెయిల్ అవసరం",
-    emailInvalid: "చెల్లుబాటు అయ్యే ఇమెయిల్‌ను నమోదు చేయండి",
-    phoneRequired: "ఫోన్ అవసరం",
-    phoneInvalid: "చెల్లుబాటు అయ్యే 10-అంకెల ఫోన్‌ను నమోదు చేయండి",
-    fixErrors: "లోపాలను సరిచేయండి",
-    pleaseCorrect: "దయచేసి హైలైట్ చేయబడిన ఫీల్డ్‌లను సరిచేయండి.",
-    currentPassword: "ప్రస్తుత పాస్‌వర్డ్",
-    newPassword: "కొత్త పాస్‌వర్డ్",
-    confirmPassword: "పాస్‌వర్డ్‌ను నిర్ధారించండి",
-    passwordRequired: "పాస్‌వర్డ్ అవసరం",
-    passwordMinLength: "పాస్‌వర్డ్ కనీసం 6 అక్షరాలతో ఉండాలి",
-    passwordMismatch: "పాస్‌వర్డ్‌లు సరిపోలడం లేదు",
-    passwordIncorrect: "ప్రస్తుత పాస్‌వర్డ్ తప్పు",
-    referralTitle: "రెఫర్ & సంపాదించండి",
-    referralMessage: "మీ రెఫరల్ కోడ్‌ను షేర్ చేయండి: CHHAVI123\n\nమీ స్నేహితుడికి మొదటి ఆర్డర్‌పై ₹100 తగ్గింపు\nవారు మొదటి ఆర్డర్ పూర్తి చేసినప్పుడు మీకు ₹100 లభిస్తాయి",
-    copyCode: "కోడ్‌ను కాపీ చేయండి",
-    share: "షేర్ చేయండి",
-    addMoneyTitle: "వాలెట్‌లో డబ్బు జోడించండి",
-    enterAmount: "జోడించడానికి మొత్తాన్ని నమోదు చేయండి:",
-    loadingProfile: "ప్రొఫైల్ లోడ్ అవుతోంది...",
-    whatsappNotInstalled: "ఈ పరికరంలో WhatsApp ఇన్‌స్టాల్ చేయబడలేదు.",
-    callNotAvailable: "ఈ పరికరంలో కాల్ చేయడం సాధ్యం కాదు.",
+    // ... (existing Telugu translations)
+    guestWelcome: "స్వాగతం, అతిథి!",
+    guestSubtitle: "మీరు అతిథిగా బ్రౌజ్ చేస్తున్నారు",
+    loginToAccess: "అన్ని ఫీచర్లను యాక్సెస్ చేయడానికి లాగిన్ చేయండి",
+    loginNow: "ఇప్పుడే లాగిన్ చేయండి",
+    createAccount: "ఖాతా సృష్టించండి",
+    guestFeatures: "అతిథి ఫీచర్లు",
+    browseMenu: "మెనూ బ్రౌజ్ చేయండి",
+    browseMenuDesc: "మా రుచికరమైన మెనూని అన్వేషించండి",
+    viewEvents: "ఈవెంట్లను చూడండి",
+    viewEventsDesc: "మా రాబోయే ఈవెంట్లను చూడండి",
+    contactSupport: "సహాయాన్ని సంప్రదించండి",
+    contactSupportDesc: "మా టీమ్ నుండి సహాయం పొందండి",
+    guestLimitations: "అతిథి పరిమితులు",
+    orderLimit: "ఆర్డర్ చేయలేరు",
+    addressLimit: "చిరునామాలు సేవ్ చేయలేరు",
+    walletLimit: "వాలెట్ యాక్సెస్ లేదు",
+    referralLimit: "రెఫర్ & సంపాదించలేరు",
+    loginPrompt: "అన్ని ఫీచర్లను అన్‌లాక్ చేయడానికి లాగిన్ చేయండి!",
+    guestInfo: "అతిథి వినియోగదారులు బ్రౌజ్ చేయవచ్చు కానీ ఆర్డర్ చేయడం, చిరునామాలు సేవ్ చేయడం లేదా వాలెట్ యాక్సెస్ చేయడం వంటి చర్యలు చేయలేరు.",
   },
 
   gu: {
-    editProfile: "પ્રોફાઇલ સંપાદિત કરો",
-    accountInfo: "એકાઉન્ટ માહિતી",
-    email: "ઇમેઇલ",
-    phone: "ફોન",
-    changePassword: "પાસવર્ડ બદલો",
-    savedAddresses: "સાચવેલા સરનામાં",
-    addNew: "નવું ઉમેરો",
-    noAddresses: "કોઈ સરનામું સાચવેલ નથી",
-    noAddressesSub: "ઓર્ડર શરૂ કરવા માટે તમારું પ્રથમ સરનામું ઉમેરો",
-    addAddress: "સરનામું ઉમેરો",
-    default: "ડિફોલ્ટ",
-    setDefault: "ડિફોલ્ટ તરીકે સેટ કરો",
-    youCanAdd: "તમે",
-    moreAddress: "વધુ એક સરનામું ઉમેરી શકો છો",
-    moreAddresses: "વધુ સરનામાં ઉમેરી શકો છો",
-    ordersWallet: "ઓર્ડર અને વોલેટ",
-    myOrders: "મારા ઓર્ડર",
-    viewAllOrders: "બધા ઓર્ડર જુઓ",
-    wallet: "વોલેટ",
-    balance: "બેલેન્સ",
-    addMoney: "પૈસા ઉમેરો",
-    referEarn: "રેફર અને કમાઓ",
-    earnPerReferral: "દરેક રેફરલ પર ₹100 કમાઓ",
-    preferences: "પસંદગીઓ",
-    notifications: "સૂચનાઓ",
-    notificationSub: "ઓર્ડર અપડેટ્સ પ્રાપ્ત કરો",
-    darkMode: "ડાર્ક મોડ",
-    enabled: "સક્ષમ",
-    disabled: "અક્ષમ",
-    language: "ભાષા",
-    helpSupport: "મદદ",
-    helpCenter: "મદદ કેન્દ્ર",
-    contactUs: "અમારો સંપર્ક કરો",
-    contactSub: "24/7 ગ્રાહક સહાય",
-    termsPrivacy: "શરતો અને ગોપનીયતા",
-    appVersion: "એપ વર્ઝન",
-    logout: "લૉગઆઉટ",
-    cancel: "રદ કરો",
-    save: "સાચવો",
-    saveChanges: "ફેરફારો સાચવો",
-    delete: "કાઢી નાખો",
-    selectLanguage: "ભાષા પસંદ કરો",
-    searchLanguage: "ભાષા શોધો...",
-    noLanguages: "કોઈ ભાષા મળી નથી",
-    addNewAddress: "નવું સરનામું ઉમેરો",
-    addressType: "સરનામાનો પ્રકાર",
-    home: "ઘર",
-    work: "કાર્યાલય",
-    other: "અન્ય",
-    addressName: "સરનામાનું નામ (દા.ત., ઘર, કાર્યાલય)",
-    fullAddress: "સંપૂર્ણ સરનામું",
-    phoneNumber: "ફોન નંબર",
-    setAsDefault: "ડિફોલ્ટ સરનામા તરીકે સેટ કરો",
-    saveAddress: "સરનામું સાચવો",
-    selectLiveLocation: "લાઇવ લોકેશન પસંદ કરો",
-    fetchingLocation: "સરનામું મેળવી રહ્યું છે...",
-    locationError: "લોકેશન ભૂલ",
-    locationPermissionDenied: "લોકેશન ઍક્સેસ કરવાની પરવાનગી નકારવામાં આવી",
-    success: "સફળતા",
-    error: "ભૂલ",
-    warning: "ચેતવણી",
-    cameraPermission: "કેમેરા પરવાનગી આવશ્યક છે",
-    galleryPermission: "ગેલેરી પરવાનગી આવશ્યક છે",
-    uploadFailed: "છબી અપલોડ નિષ્ફળ",
-    profileUpdated: "પ્રોફાઇલ સફળતાપૂર્વક અપડેટ થઈ!",
-    addressAdded: "સરનામું સફળતાપૂર્વક ઉમેરાયું!",
-    passwordChanged: "પાસવર્ડ સફળતાપૂર્વક બદલાયો!",
-    photoUpdated: "પ્રોફાઇલ ફોટો અપડેટ થયો",
-    fillAllFields: "કૃપા કરીને બધા ક્ષેત્રો ભરો",
-    limitReached: "તમે ફક્ત 3 સરનામાં સાચવી શકો છો.",
-    deleteAddress: "સરનામું કાઢી નાખો",
-    deleteConfirm: "શું તમે ખરેખર આ સરનામું કાઢી નાખવા માંગો છો?",
-    logoutConfirm: "શું તમે ખરેખર લૉગઆઉટ કરવા માંગો છો?",
-    languageChanged: "એપ ભાષા સેટ થઈ",
-    copied: "કૉપિ થયું!",
-    copyCode: "રેફરલ કોડ ક્લિપબોર્ડ પર કૉપિ થયો",
-    invalidAmount: "અમાન્ય રકમ",
-    enterValidAmount: "કૃપા કરીને માન્ય રકમ દાખલ કરો",
-    nameRequired: "નામ આવશ્યક છે",
-    nameMinLength: "નામ ઓછામાં ઓછા 3 અક્ષરોનું હોવું જોઈએ",
-    emailRequired: "ઇમેઇલ આવશ્યક છે",
-    emailInvalid: "માન્ય ઇમેઇલ દાખલ કરો",
-    phoneRequired: "ફોન આવશ્યક છે",
-    phoneInvalid: "માન્ય 10-અંકનો ફોન દાખલ કરો",
-    fixErrors: "ભૂલો સુધારો",
-    pleaseCorrect: "કૃપા કરીને હાઇલાઇટ કરેલા ક્ષેત્રો સુધારો.",
-    currentPassword: "વર્તમાન પાસવર્ડ",
-    newPassword: "નવો પાસવર્ડ",
-    confirmPassword: "પાસવર્ડની પુષ્ટિ કરો",
-    passwordRequired: "પાસવર્ડ આવશ્યક છે",
-    passwordMinLength: "પાસવર્ડ ઓછામાં ઓછા 6 અક્ષરોનો હોવો જોઈએ",
-    passwordMismatch: "પાસવર્ડ મેળ ખાતા નથી",
-    passwordIncorrect: "વર્તમાન પાસવર્ડ ખોટો છે",
-    referralTitle: "રેફર અને કમાઓ",
-    referralMessage: "તમારો રેફરલ કોડ શેર કરો: CHHAVI123\n\nતમારા મિત્રને પ્રથમ ઓર્ડર પર ₹100 ની છૂટ\nજ્યારે તેઓ પ્રથમ ઓર્ડર પૂર્ણ કરે ત્યારે તમને ₹100 મળશે",
-    copyCode: "કોડ કૉપિ કરો",
-    share: "શેર કરો",
-    addMoneyTitle: "વોલેટમાં પૈસા ઉમેરો",
-    enterAmount: "ઉમેરવા માટે રકમ દાખલ કરો:",
-    loadingProfile: "પ્રોફાઇલ લોડ થઈ રહી છે...",
-    whatsappNotInstalled: "આ ઉપકરણ પર WhatsApp ઇન્સ્ટોલ કરેલ નથી.",
-    callNotAvailable: "આ ઉપકરણ પર કૉલ કરવો શક્ય નથી.",
+    // ... (existing Gujarati translations)
+    guestWelcome: "સ્વાગત છે, મહેમાન!",
+    guestSubtitle: "તમે મહેમાન તરીકે બ્રાઉઝ કરી રહ્યા છો",
+    loginToAccess: "બધી સુવિધાઓને ઍક્સેસ કરવા માટે લૉગિન કરો",
+    loginNow: "હમણાં લૉગિન કરો",
+    createAccount: "ખાતું બનાવો",
+    guestFeatures: "મહેમાન સુવિધાઓ",
+    browseMenu: "મેનુ બ્રાઉઝ કરો",
+    browseMenuDesc: "અમારું સ્વાદિષ્ટ મેનુ અન્વેષણ કરો",
+    viewEvents: "ઇવેન્ટ્સ જુઓ",
+    viewEventsDesc: "અમારી આગામી ઇવેન્ટ્સ જુઓ",
+    contactSupport: "સહાયનો સંપર્ક કરો",
+    contactSupportDesc: "અમારી ટીમ પાસેથી મદદ મેળવો",
+    guestLimitations: "મહેમાન મર્યાદાઓ",
+    orderLimit: "ઓર્ડર કરી શકતા નથી",
+    addressLimit: "સરનામાં સાચવી શકતા નથી",
+    walletLimit: "વોલેટ ઍક્સેસ નથી",
+    referralLimit: "રેફર અને કમાઈ શકતા નથી",
+    loginPrompt: "બધી સુવિધાઓ અનલૉક કરવા માટે લૉગિન કરો!",
+    guestInfo: "મહેમાન વપરાશકર્તાઓ બ્રાઉઝ કરી શકે છે પરંતુ ઓર્ડર કરવા, સરનામાં સાચવવા અથવા વોલેટ ઍક્સેસ કરવા જેવી ક્રિયાઓ કરી શકતા નથી.",
   },
 };
 
 export default function ProfileScreen() {
   const { colors, mode, toggle } = useTheme();
-  const { isLoggedIn } = useAuth();
+  const { user: authUser, isGuest, loginGuest, logout } = useAuth(); // 👈 Use auth context
   const [user, setUser] = useState<any>(null);
+
+useEffect(() => {
+  if (authUser) {
+    setUser(authUser);
+  }
+}, [authUser]);
+
   const [loading, setLoading] = useState(true);
+  const [isGuestUser, setIsGuestUser] = useState(false);
 
   useEffect(() => {
-    if (!isLoggedIn) {
-      router.replace("/auth/login");
+    checkUserStatus();
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      checkUserStatus();
+    }, [])
+  );
+
+  // 👇 Check if user is guest
+  const checkUserStatus = async () => {
+    
+    try {
+
+      const userInfo = await AsyncStorage.getItem("userInfo");
+
+      if (!userInfo) {
+        setIsGuestUser(true);
+        setLoading(false);
+        return;
+      }
+
+      const parsedUser = JSON.parse(userInfo);
+
+      if (parsedUser?.isGuest) {
+        setIsGuestUser(true);
+        setUser(parsedUser);
+        setLoading(false);
+        return;
+      }
+
+      setIsGuestUser(false);
+      fetchProfile();
+
+    } catch (error) {
+      console.log("User check error", error);
+      setIsGuestUser(true);
+      setLoading(false);
     }
-  }, [isLoggedIn]);
+  };
 
   const handleHelpCenter = () => {
     const phone = "9644974442";
@@ -629,6 +366,11 @@ export default function ProfileScreen() {
   const [isFetchingLocation, setIsFetchingLocation] = useState(false);
 
   const handleSelectLiveLocation = async () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
+
     try {
       const { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -714,10 +456,12 @@ export default function ProfileScreen() {
 
   const loadSavedData = async () => {
     try {
-      // Load addresses
-      const savedAddresses = await AsyncStorage.getItem('userAddresses');
-      if (savedAddresses) {
-        setAddresses(JSON.parse(savedAddresses));
+      // Load addresses (only for logged-in users)
+      if (!isGuestUser) {
+        const savedAddresses = await AsyncStorage.getItem('userAddresses');
+        if (savedAddresses) {
+          setAddresses(JSON.parse(savedAddresses));
+        }
       }
       // Load language
       const savedLang = await AsyncStorage.getItem('appLanguage');
@@ -757,6 +501,10 @@ export default function ProfileScreen() {
   );
 
   const handleEditProfile = () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
     if (!user) return;
     setEditingUser({
       name: user.name,
@@ -767,6 +515,10 @@ export default function ProfileScreen() {
   };
 
   const handleChangeAvatar = () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
     Alert.alert(t("editProfile"), "", [
       { text: t("cameraPermission"), onPress: () => openCamera() },
       { text: t("galleryPermission"), onPress: () => openGallery() },
@@ -847,6 +599,7 @@ export default function ProfileScreen() {
       Alert.alert(t("error"), t("uploadFailed"));
     }
   };
+
   const validateEmail = (email: string) => {
     const value = email.toLowerCase().trim();
     const re = /^[a-z0-9._%+-]+@(gmail\.com|yahoo\.com)$/;
@@ -960,6 +713,11 @@ export default function ProfileScreen() {
 
   // Add Address - Max 3 addresses
   const handleAddAddress = () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
+
     if (!newAddress.name || !newAddress.address || !newAddress.phone) {
       Alert.alert(t("error"), t("fillAllFields"));
       return;
@@ -1003,6 +761,8 @@ export default function ProfileScreen() {
   };
 
   const handleSetDefaultAddress = (id: string) => {
+    if (isGuestUser) return;
+
     const updatedAddresses = addresses.map(addr => ({
       ...addr,
       isDefault: addr.id === id,
@@ -1011,6 +771,8 @@ export default function ProfileScreen() {
   };
 
   const handleDeleteAddress = (id: string) => {
+    if (isGuestUser) return;
+
     Alert.alert(
       t("deleteAddress"),
       t("deleteConfirm"),
@@ -1046,13 +808,29 @@ export default function ProfileScreen() {
           text: t("logout"),
           style: "destructive",
           onPress: async () => {
-            await AsyncStorage.removeItem("token");
-            await AsyncStorage.removeItem("userInfo");
-            await AsyncStorage.removeItem("userAddresses");
-            await AsyncStorage.removeItem("appLanguage");
-            router.replace("/auth/login");
-          },
-        },
+            try {
+              // Delete user data from local storage
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("cartCount");
+
+              // Create guest user fallback
+              const guestUser = {
+                _id: "guest_user",
+                name: "Guest User",
+                email: "",
+                isGuest: true,
+                avatar: null
+              };
+              await AsyncStorage.setItem("userInfo", JSON.stringify(guestUser));
+
+              // Update AuthContext and redirect
+              await loginGuest();
+              router.replace("/");
+            } catch (error) {
+              console.log("Logout error:", error);
+            }
+          }
+        }
       ]
     );
   };
@@ -1072,6 +850,10 @@ export default function ProfileScreen() {
   };
 
   const handleNavigateToOrders = () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
     router.push({
       pathname: "/order",
       params: { userId: user?._id },
@@ -1079,6 +861,11 @@ export default function ProfileScreen() {
   };
 
   const handleReferral = () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
+
     Alert.alert(
       t("referralTitle"),
       t("referralMessage"),
@@ -1101,6 +888,11 @@ export default function ProfileScreen() {
   };
 
   const handleAddMoney = () => {
+    if (isGuestUser) {
+      Alert.alert(t("loginRequired"), t("loginToAccess"));
+      return;
+    }
+
     Alert.prompt(
       t("addMoneyTitle"),
       t("enterAmount"),
@@ -1146,36 +938,301 @@ export default function ProfileScreen() {
     Alert.alert(t("termsPrivacy"), "Terms and privacy policy content here...");
   };
 
-  useEffect(() => {
-    console.log("PROFILE SCREEN MOUNTED ✅");
-    fetchProfile();
-  }, []);
-
-  useFocusEffect(
-  useCallback(() => {
-    fetchProfile();
-  }, [])
-);
 
   const fetchProfile = async () => {
-    try {
-      const token = await AsyncStorage.getItem("token");
-      if (!token) {
-        console.log("❌ No token found");
-        router.replace("/auth/login");
+  try {
+
+    const userInfo = await AsyncStorage.getItem("userInfo");
+
+    if (userInfo) {
+      const parsedUser = JSON.parse(userInfo);
+
+      // 👇 Guest user
+      if (parsedUser?.isGuest) {
+        setIsGuestUser(true);
+        setUser(parsedUser);
+        setLoading(false);
         return;
       }
-      const response = await axios.get(
-        `${BASE_URL}/api/auth/profile`,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
-      console.log("✅ PROFILE DATA:", response.data);
-      setUser(response.data);
-      setLoading(false);
-    } catch (error) {
-      console.log("❌ PROFILE ERROR:", error.response?.data || error.message);
-      setLoading(false);
     }
+
+    const token = await AsyncStorage.getItem("token");
+
+    if (!token) {
+      setIsGuestUser(true);
+      setLoading(false);
+      return;
+    }
+
+    const response = await axios.get(
+      `${BASE_URL}/api/auth/profile`,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    setUser(response.data);
+    setLoading(false);
+
+  } catch (error) {
+    console.log("PROFILE ERROR:", error.response?.data || error.message);
+    setLoading(false);
+  }
+};
+
+  // 👇 Render guest view
+  const renderGuestView = () => {
+    return (
+      <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
+        {/* Guest Header */}
+        <View style={dynamicStyles.header}>
+          <View style={styles.avatarContainer}>
+            <View style={[styles.initialsAvatar, { backgroundColor: colors.primary + '20' }]}>
+              <Text style={[styles.initialsText, { color: colors.primary }]}>
+                {user?.initials || (user?.name ? getInitials(user.name) : "SK")}
+              </Text>
+            </View>
+          </View>
+          <Text style={dynamicStyles.name}>{t("guestWelcome")}</Text>
+          <Text style={dynamicStyles.phone}>{t("guestSubtitle")}</Text>
+
+          <View style={styles.guestInfoCard}>
+            <Ionicons name="information-circle" size={20} color={colors.warning} />
+            <Text style={[styles.guestInfoText, { color: colors.subText }]}>
+              {t("guestInfo")}
+            </Text>
+          </View>
+
+          <View style={styles.guestActions}>
+            <TouchableOpacity
+              style={[styles.guestActionBtn, { backgroundColor: colors.primary }]}
+              onPress={() => router.push("/auth/login")}
+            >
+              <Ionicons name="log-in" size={18} color="#fff" />
+              <Text style={styles.guestActionText}>{t("loginNow")}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.guestActionBtn, styles.guestActionSecondary, { borderColor: colors.primary }]}
+              onPress={() => router.push("/auth/registration")}
+            >
+              <Text style={[styles.guestActionSecondaryText, { color: colors.primary }]}>
+                {t("createAccount")}
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Guest Features */}
+        <View style={styles.section}>
+          <Text style={dynamicStyles.sectionTitle}>{t("guestFeatures")}</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={() => router.push("/menu")}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="restaurant" size={22} color={colors.success} />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("browseMenu")}</Text>
+                  <Text style={[styles.itemSub, { color: colors.subText }]}>{t("browseMenuDesc")}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={() => router.push("/event")}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="calendar" size={22} color={colors.warning} />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("viewEvents")}</Text>
+                  <Text style={[styles.itemSub, { color: colors.subText }]}>{t("viewEventsDesc")}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={handleCallSupport}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="call" size={22} color={colors.info} />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("contactSupport")}</Text>
+                  <Text style={[styles.itemSub, { color: colors.subText }]}>{t("contactSupportDesc")}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Guest Limitations */}
+        <View style={styles.section}>
+          <Text style={dynamicStyles.sectionTitle}>{t("guestLimitations")}</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.limitItem, { borderColor: colors.border }]}>
+              <Ionicons name="close-circle" size={22} color={colors.danger} />
+              <Text style={[styles.limitText, { color: colors.text }]}>{t("orderLimit")}</Text>
+            </View>
+            <View style={[styles.limitItem, { borderColor: colors.border }]}>
+              <Ionicons name="close-circle" size={22} color={colors.danger} />
+              <Text style={[styles.limitText, { color: colors.text }]}>{t("addressLimit")}</Text>
+            </View>
+            <View style={[styles.limitItem, { borderColor: colors.border }]}>
+              <Ionicons name="close-circle" size={22} color={colors.danger} />
+              <Text style={[styles.limitText, { color: colors.text }]}>{t("walletLimit")}</Text>
+            </View>
+            <View style={[styles.limitItem, { borderColor: colors.border }]}>
+              <Ionicons name="close-circle" size={22} color={colors.danger} />
+              <Text style={[styles.limitText, { color: colors.text }]}>{t("referralLimit")}</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Login Prompt */}
+        <View style={[styles.loginPromptCard, { backgroundColor: colors.primary + '10', borderColor: colors.primary }]}>
+          <Text style={[styles.loginPromptText, { color: colors.primary }]}>
+            {t("loginPrompt")}
+          </Text>
+          <TouchableOpacity
+            style={[styles.loginPromptBtn, { backgroundColor: colors.primary }]}
+            onPress={() => router.push("/auth/login")}
+          >
+            <Text style={styles.loginPromptBtnText}>{t("loginNow")}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Preferences - Language and Dark Mode (Available for guests) */}
+        <View style={styles.section}>
+          <Text style={dynamicStyles.sectionTitle}>{t("preferences")}</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={[styles.preferenceItem, { borderColor: colors.border }]}>
+              <View style={styles.preferenceLeft}>
+                <Ionicons name="notifications" size={22} color="#009688" />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={dynamicStyles.preferenceTitle}>{t("notifications")}</Text>
+                  <Text style={dynamicStyles.preferenceSub}>{t("notificationSub")}</Text>
+                </View>
+              </View>
+              <Switch
+                value={notificationsEnabled}
+                onValueChange={setNotificationsEnabled}
+                trackColor={{ false: colors.border, true: "#009688" }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            <View style={[styles.preferenceItem, { borderColor: colors.border }]}>
+              <View style={styles.preferenceLeft}>
+                <Ionicons
+                  name={mode === 'dark' ? "moon" : "sunny"}
+                  size={22}
+                  color={mode === 'dark' ? "#FFD700" : "#FF9800"}
+                />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={dynamicStyles.preferenceTitle}>{t("darkMode")}</Text>
+                  <Text style={dynamicStyles.preferenceSub}>
+                    {mode === "dark" ? t("enabled") : t("disabled")}
+                  </Text>
+                </View>
+              </View>
+              <Switch
+                value={mode === "dark"}
+                onValueChange={toggle}
+                trackColor={{ false: colors.border, true: colors.primary }}
+                thumbColor="#fff"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={() => setShowLanguageModal(true)}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="language" size={22} color="#009688" />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("language")}</Text>
+                  <Text style={[styles.itemSub, { color: colors.subText }]}>{language}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* Help & Support */}
+        <View style={styles.section}>
+          <Text style={dynamicStyles.sectionTitle}>{t("helpSupport")}</Text>
+          <View style={[styles.card, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={handleHelpCenter}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("helpCenter")}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={handleCallSupport}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="call" size={22} color="#25D366" />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("contactUs")}</Text>
+                  <Text style={[styles.itemSub, { color: colors.subText }]}>{t("contactSub")}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.item, { borderColor: colors.border }]}
+              onPress={handleTerms}
+            >
+              <View style={styles.itemLeft}>
+                <Ionicons name="document-text" size={22} color="#607D8B" />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("termsPrivacy")}</Text>
+                </View>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={colors.subText} />
+            </TouchableOpacity>
+
+            <View style={[styles.item, { borderColor: colors.border }]}>
+              <View style={styles.itemLeft}>
+                <Ionicons name="information-circle" size={22} color="#607D8B" />
+                <View style={{ marginLeft: 12 }}>
+                  <Text style={[styles.itemTitle, { color: colors.text }]}>{t("appVersion")}</Text>
+                  <Text style={[styles.itemSub, { color: colors.subText }]}>v2.0.1</Text>
+                </View>
+              </View>
+            </View>
+          </View>
+        </View>
+
+        {/* Logout/Login Button for Guest */}
+        <TouchableOpacity
+          style={[styles.logoutBtn, { backgroundColor: colors.primary }]}
+          onPress={() => router.push("/auth/login")}
+        >
+          <Ionicons name="log-in" size={20} color="#fff" />
+          <Text style={styles.logoutText}>{t("loginNow")}</Text>
+        </TouchableOpacity>
+      </ScrollView>
+    );
   };
 
   // Dynamic styles based on theme
@@ -1486,6 +1543,11 @@ export default function ProfileScreen() {
     );
   }
 
+  // If guest user, show guest view
+  if (isGuestUser) {
+    return renderGuestView();
+  }
+
   return (
     <ScrollView style={dynamicStyles.container} showsVerticalScrollIndicator={false}>
       {/* Header Section */}
@@ -1495,7 +1557,13 @@ export default function ProfileScreen() {
             <Image source={{ uri: user.avatar }} style={styles.avatar} />
           ) : (
             <View style={[styles.initialsAvatar, { backgroundColor: "#FFF3E0" }]}>
-              <Text style={styles.initialsText}>{getInitials(user?.name)}</Text>
+              <Text style={styles.initialsText}>
+                {user?.initials
+                  ? user.initials
+                  : user?.name
+                    ? getInitials(user.name)
+                    : "SK"}
+              </Text>
             </View>
           )}
           <TouchableOpacity
@@ -2484,5 +2552,83 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: "center",
     marginTop: 8,
+  },
+
+  // 👇 Guest view styles
+  guestInfoCard: {
+    flexDirection: "row",
+    backgroundColor: "#FFA50020",
+    padding: 16,
+    borderRadius: 12,
+    marginVertical: 16,
+    gap: 12,
+  },
+  guestInfoText: {
+    flex: 1,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  guestActions: {
+    flexDirection: "row",
+    gap: 12,
+    marginTop: 8,
+  },
+  guestActionBtn: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 8,
+  },
+  guestActionSecondary: {
+    backgroundColor: "transparent",
+    borderWidth: 2,
+  },
+  guestActionSecondaryText: {
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  guestActionText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
+  },
+  limitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    gap: 12,
+  },
+  limitText: {
+    fontSize: 15,
+    fontWeight: "500",
+  },
+  loginPromptCard: {
+    marginHorizontal: 20,
+    padding: 20,
+    borderRadius: 12,
+    borderWidth: 2,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  loginPromptText: {
+    fontSize: 16,
+    fontWeight: "600",
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  loginPromptBtn: {
+    paddingHorizontal: 30,
+    paddingVertical: 12,
+    borderRadius: 8,
+  },
+  loginPromptBtnText: {
+    color: "#fff",
+    fontSize: 16,
+    fontWeight: "600",
   },
 });

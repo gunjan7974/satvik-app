@@ -18,10 +18,13 @@ import {
   Alert,
   BackHandler,
 } from "react-native";
+import * as Print from 'expo-print';
+import * as Sharing from 'expo-sharing';
 import type { ListRenderItem } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { useTheme } from "../data/ThemeContext";
+import { useAuth } from "../data/AuthContext"; // 👈 Import useAuth
 
 const { width, height } = Dimensions.get("window");
 const CARD_WIDTH = width * 0.8;
@@ -163,6 +166,14 @@ const translations = {
     selectHallFirst: "Please select a party hall",
     fillContactInfo: "Please fill all required contact information",
 
+    // 👇 Guest user messages
+    guestWarning: "Guest users cannot book events",
+    guestWarningDesc: "Please login to book events and access all features",
+    loginRequired: "Login Required",
+    login: "Login",
+    cancel: "Cancel",
+    browseEvents: "Browse Events",
+
     // Months
     january: "January",
     february: "February",
@@ -251,6 +262,15 @@ const translations = {
     selectEventFirst: "कृपया एक इवेंट प्रकार चुनें",
     selectHallFirst: "कृपया एक पार्टी हॉल चुनें",
     fillContactInfo: "कृपया सभी आवश्यक संपर्क जानकारी भरें",
+
+    // 👇 Guest user messages
+    guestWarning: "मेहमान उपयोगकर्ता इवेंट बुक नहीं कर सकते",
+    guestWarningDesc: "इवेंट बुक करने और सभी सुविधाओं का उपयोग करने के लिए कृपया लॉगिन करें",
+    loginRequired: "लॉगिन आवश्यक",
+    login: "लॉगिन",
+    cancel: "रद्द करें",
+    browseEvents: "इवेंट ब्राउज़ करें",
+
     january: "जनवरी",
     february: "फरवरी",
     march: "मार्च",
@@ -338,6 +358,15 @@ const translations = {
     selectEventFirst: "कृपया एक इव्हेंट प्रकार निवडा",
     selectHallFirst: "कृपया एक पार्टी हॉल निवडा",
     fillContactInfo: "कृपया सर्व आवश्यक संपर्क माहिती भरा",
+
+    // 👇 Guest user messages
+    guestWarning: "पाहुणे वापरकर्ते इव्हेंट बुक करू शकत नाहीत",
+    guestWarningDesc: "इव्हेंट बुक करण्यासाठी आणि सर्व सुविधा वापरण्यासाठी कृपया लॉगिन करा",
+    loginRequired: "लॉगिन आवश्यक",
+    login: "लॉगिन",
+    cancel: "रद्द करा",
+    browseEvents: "इव्हेंट ब्राउझ करा",
+
     january: "जानेवारी",
     february: "फेब्रुवारी",
     march: "मार्च",
@@ -425,6 +454,15 @@ const translations = {
     selectEventFirst: "தயவுசெய்து ஒரு நிகழ்வு வகையை தேர்வு செய்யவும்",
     selectHallFirst: "தயவுசெய்து ஒரு பார்ட்டி ஹாலை தேர்வு செய்யவும்",
     fillContactInfo: "தயவுசெய்து அனைத்து தேவையான தொடர்பு தகவல்களையும் பூர்த்தி செய்யவும்",
+
+    // 👇 Guest user messages
+    guestWarning: "விருந்தினர் பயனர்கள் நிகழ்வுகளைப் பதிவு செய்ய முடியாது",
+    guestWarningDesc: "நிகழ்வுகளைப் பதிவு செய்ய மற்றும் அனைத்து அம்சங்களையும் அணுக தயவுசெய்து உள்நுழையவும்",
+    loginRequired: "உள்நுழைவு தேவை",
+    login: "உள்நுழைக",
+    cancel: "ரத்து",
+    browseEvents: "நிகழ்வுகளை உலாவுக",
+
     january: "ஜனவரி",
     february: "பிப்ரவரி",
     march: "மார்ச்",
@@ -512,6 +550,15 @@ const translations = {
     selectEventFirst: "કૃપા કરીને ઇવેન્ટ પ્રકાર પસંદ કરો",
     selectHallFirst: "કૃપા કરીને પાર્ટી હોલ પસંદ કરો",
     fillContactInfo: "કૃપા કરીને બધી જરૂરી સંપર્ક માહિતી ભરો",
+
+    // 👇 Guest user messages
+    guestWarning: "મહેમાન વપરાશકર્તાઓ ઇવેન્ટ બુક કરી શકતા નથી",
+    guestWarningDesc: "ઇવેન્ટ બુક કરવા અને બધી સુવિધાઓનો ઉપયોગ કરવા માટે કૃપા કરીને લોગિન કરો",
+    loginRequired: "લોગિન આવશ્યક છે",
+    login: "લોગિન",
+    cancel: "રદ કરો",
+    browseEvents: "ઇવેન્ટ્સ બ્રાઉઝ કરો",
+
     january: "જાન્યુઆરી",
     february: "ફેબ્રુઆરી",
     march: "માર્ચ",
@@ -521,7 +568,7 @@ const translations = {
     july: "જુલાઈ",
     august: "ઓગસ્ટ",
     september: "સપ્ટેમ્બર",
-    october: "ઓક્ટોબર",
+    october: "ઑક્ટોબર",
     november: "નવેમ્બર",
     december: "ડિસેમ્બર",
   },
@@ -576,16 +623,39 @@ const SERVICE_DATA = [
 export default function EventsBookingScreen() {
   const router = useRouter();
   const { colors, mode } = useTheme();
+  const { user, isGuest } = useAuth(); // 👈 Get user and isGuest from auth
 
   // Language state
   const [languageCode, setLanguageCode] = useState("en");
+
+  // 👇 Guest user state
+  const [isGuestUser, setIsGuestUser] = useState(false);
+  const [showGuestModal, setShowGuestModal] = useState(false);
 
   // Load saved language from AsyncStorage
   useFocusEffect(
     React.useCallback(() => {
       loadLanguage();
+      checkUserStatus(); // 👈 Check user status on focus
     }, [])
   );
+
+  // 👇 Check if user is guest
+  const checkUserStatus = async () => {
+    try {
+      const userInfo = await AsyncStorage.getItem('userInfo');
+      if (userInfo) {
+        const userData = JSON.parse(userInfo);
+        setIsGuestUser(userData.isGuest || false);
+      } else {
+        // No user found - treat as guest
+        setIsGuestUser(true);
+      }
+    } catch (error) {
+      console.log('Error checking user:', error);
+      setIsGuestUser(true);
+    }
+  };
 
   const loadLanguage = async () => {
     try {
@@ -695,6 +765,10 @@ export default function EventsBookingScreen() {
         setShowBookingForm(false);
         return true;
       }
+      if (showGuestModal) {
+        setShowGuestModal(false);
+        return true;
+      }
       router.replace("/");
       return true;
     };
@@ -705,7 +779,7 @@ export default function EventsBookingScreen() {
     );
 
     return () => backHandler.remove();
-  }, [showBookingForm, router]);
+  }, [showBookingForm, showGuestModal, router]);
 
   // ---------------- DATA ----------------
   const [eventTypes, setEventTypes] = useState<any[]>([]);
@@ -828,16 +902,30 @@ export default function EventsBookingScreen() {
     }
   };
 
-  // ---------------- HANDLERS ----------------
-  const handleEventSelect = (event: EventType) => {
-    setSelectedEventType(event);
-    setBookingForm((prev) => ({
-      ...prev,
-      eventType: event._id
-    }));
-    setShowBookingForm(true);
+  // 👇 Handle booking button press with guest check
+  const handleBookNowPress = () => {
+    if (isGuestUser) {
+      setShowGuestModal(true);
+    } else {
+      setShowBookingForm(true);
+    }
   };
 
+  // 👇 Handle event select with guest check
+  const handleEventSelect = (event: EventType) => {
+    if (isGuestUser) {
+      setShowGuestModal(true);
+    } else {
+      setSelectedEventType(event);
+      setBookingForm((prev) => ({
+        ...prev,
+        eventType: event._id
+      }));
+      setShowBookingForm(true);
+    }
+  };
+
+  // ---------------- HANDLERS ----------------
   const handleHallSelect = (hall: PartyHall) => {
     const isSelected = bookingForm.selectedHall === hall._id;
     let newTotalCost = isSelected ? 0 : hall.price;
@@ -931,12 +1019,117 @@ export default function EventsBookingScreen() {
         return;
       }
 
+      // Generate PDF Bill before showing success
+      const selectedHallData = partyHalls.find(h => h._id === bookingForm.selectedHall);
+      await generateBillPDF(bookingForm, selectedHallData);
+
       Alert.alert(t("success"), t("bookingSuccess"));
       setShowBookingForm(false);
       resetForm();
     } catch (error) {
       console.log("Booking Error:", error);
       Alert.alert(t("error"), t("somethingWentWrong"));
+    }
+  };
+
+  const generateBillPDF = async (form: typeof bookingForm, hall: PartyHall | undefined) => {
+    try {
+      const html = `
+        <html>
+          <head>
+            <style>
+              body { font-family: 'Helvetica', sans-serif; padding: 40px; color: #333; }
+              .header { text-align: center; border-bottom: 2px solid #FF6B35; padding-bottom: 20px; margin-bottom: 30px; }
+              .header h1 { color: #FF6B35; margin: 0; font-size: 32px; }
+              .header p { margin: 5px 0; font-size: 14px; opacity: 0.8; }
+              .section { margin-bottom: 25px; }
+              .section-title { font-size: 18px; font-weight: bold; margin-bottom: 15px; background: #FFF8E1; padding: 5px 10px; border-left: 4px solid #FF6B35; }
+              .row { display: flex; justify-content: space-between; margin-bottom: 10px; font-size: 15px; }
+              .label { color: #666; }
+              .value { font-weight: 500; }
+              .total-section { margin-top: 40px; border-top: 2px solid #eee; padding-top: 20px; }
+              .total-row { display: flex; justify-content: space-between; font-size: 22px; font-weight: bold; color: #FF6B35; }
+              .footer { margin-top: 50px; text-align: center; font-size: 12px; color: #999; border-top: 1px solid #eee; padding-top: 20px; }
+            </style>
+          </head>
+          <body>
+            <div class="header">
+              <h1>SATVIK KALEVA</h1>
+              <p>Event Booking Confirmation Receipt</p>
+              <p>Date: ${new Date().toLocaleDateString()}</p>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Customer Details</div>
+              <div class="row">
+                <span class="label">Name:</span>
+                <span class="value">${form.name}</span>
+              </div>
+              <div class="row">
+                <span class="label">Email:</span>
+                <span class="value">${form.email}</span>
+              </div>
+              <div class="row">
+                <span class="label">Phone:</span>
+                <span class="value">${form.phone}</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Event Details</div>
+              <div class="row">
+                <span class="label">Event Type:</span>
+                <span class="value">${selectedEventType?.name || 'Event'}</span>
+              </div>
+              <div class="row">
+                <span class="label">Event Date:</span>
+                <span class="value">${form.date.toDateString()}</span>
+              </div>
+              <div class="row">
+                <span class="label">Estimated Guests:</span>
+                <span class="value">${form.guests} People</span>
+              </div>
+              <div class="row">
+                <span class="label">Selected Venue:</span>
+                <span class="value">${hall?.name || 'Not Selected'}</span>
+              </div>
+            </div>
+
+            <div class="section">
+              <div class="section-title">Services & Charges</div>
+              ${hall ? `
+              <div class="row">
+                <span class="label">${hall.name} (Venue)</span>
+                <span class="value">₹${hall.price.toLocaleString()}</span>
+              </div>
+              ` : ''}
+              ${form.selectedServices.map(s => `
+              <div class="row">
+                <span class="label">${s.title}</span>
+                <span class="value">₹${s.price.toLocaleString()}</span>
+              </div>
+              `).join('')}
+            </div>
+
+            <div class="total-section">
+              <div class="total-row">
+                <span>TOTAL AMOUNT</span>
+                <span>₹${form.totalCost.toLocaleString()}</span>
+              </div>
+            </div>
+
+            <div class="footer">
+              <p>Thank you for choosing Satvik Kaleva for your special event!</p>
+              <p>This is a computer-generated receipt.</p>
+            </div>
+          </body>
+        </html>
+      `;
+
+      await Print.printAsync({ html });
+    } catch (error) {
+      console.log("PDF Error:", error);
+      Alert.alert("PDF Error", "Could not generate or share bill PDF.");
     }
   };
 
@@ -1222,6 +1415,60 @@ export default function EventsBookingScreen() {
     </View>
   );
 
+  // 👇 Render guest modal
+  const renderGuestModal = () => (
+    <Modal
+      visible={showGuestModal}
+      animationType="fade"
+      transparent
+      onRequestClose={() => setShowGuestModal(false)}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.guestModal, { backgroundColor: colors.modalBackground || colors.card }]}>
+          <View style={styles.guestModalIcon}>
+            <Ionicons name="person-outline" size={60} color={colors.primary} />
+          </View>
+          
+          <Text style={[styles.guestModalTitle, { color: colors.text }]}>
+            {t("loginRequired")}
+          </Text>
+          
+          <Text style={[styles.guestModalText, { color: colors.subText }]}>
+            {t("guestWarning")}
+          </Text>
+          
+          <Text style={[styles.guestModalDesc, { color: colors.subText }]}>
+            {t("guestWarningDesc")}
+          </Text>
+
+          <View style={styles.guestModalButtons}>
+            <TouchableOpacity
+              style={[styles.guestModalButton, { backgroundColor: colors.primary }]}
+              onPress={() => {
+                setShowGuestModal(false);
+                router.push("/auth/login");
+              }}
+            >
+              <Ionicons name="log-in-outline" size={20} color="#FFFFFF" />
+              <Text style={styles.guestModalButtonText}>{t("login")}</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.guestModalButton, styles.guestModalSecondary, { borderColor: colors.border }]}
+              onPress={() => setShowGuestModal(false)}
+            >
+              <Text style={[styles.guestModalButtonText, { color: colors.text }]}>{t("cancel")}</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={[styles.guestModalNote, { color: colors.subText }]}>
+            {t("browseEvents")}
+          </Text>
+        </View>
+      </View>
+    </Modal>
+  );
+
   if (loading) {
     return (
       <SafeAreaView style={{
@@ -1306,6 +1553,16 @@ export default function EventsBookingScreen() {
           >
             {t("heroDesc")}
           </Animated.Text>
+
+          {/* Guest badge - optional */}
+          {isGuestUser && (
+            <View style={[styles.guestBadge, { backgroundColor: colors.warning + '20' }]}>
+              <Ionicons name="person-outline" size={16} color={colors.warning} />
+              <Text style={[styles.guestBadgeText, { color: colors.warning }]}>
+                Guest Mode
+              </Text>
+            </View>
+          )}
         </Animated.View>
 
         {/* Event Types Carousel with Scroll Animation */}
@@ -1380,7 +1637,7 @@ export default function EventsBookingScreen() {
 
           <TouchableOpacity
             style={[styles.ctaButton, { backgroundColor: colors.primary }]}
-            onPress={() => setShowBookingForm(true)}
+            onPress={handleBookNowPress}
           >
             <Ionicons name="calendar" size={22} color="#FFFFFF" />
             <Text style={styles.ctaButtonText}>{t("bookNow")}</Text>
@@ -1391,7 +1648,10 @@ export default function EventsBookingScreen() {
         <View style={{ height: 80 }} />
       </Animated.ScrollView>
 
-      {/* Booking Modal */}
+      {/* Guest Modal */}
+      {renderGuestModal()}
+
+      {/* Booking Modal - Only shown for logged-in users */}
       <Modal
         visible={showBookingForm}
         animationType="slide"
@@ -1969,6 +2229,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 30,
+    alignItems: 'center',
   },
   heroTitle: {
     fontSize: 28,
@@ -2122,12 +2383,14 @@ const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    justifyContent: "flex-end",
+    justifyContent: "center",
+    alignItems: 'center',
   },
   modalContainer: {
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
     maxHeight: "90%",
+    width: '100%',
   },
   modalHeader: {
     flexDirection: "row",
@@ -2440,5 +2703,81 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
+  },
+
+  // 👇 Guest modal styles
+  guestModal: {
+    width: '85%',
+    borderRadius: 25,
+    padding: 30,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  guestModalIcon: {
+    marginBottom: 20,
+  },
+  guestModalTitle: {
+    fontSize: 24,
+    fontWeight: '800',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  guestModalText: {
+    fontSize: 18,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  guestModalDesc: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 25,
+    lineHeight: 20,
+  },
+  guestModalButtons: {
+    width: '100%',
+    gap: 12,
+    marginBottom: 15,
+  },
+  guestModalButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+  },
+  guestModalButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#FFFFFF',
+  },
+  guestModalSecondary: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+  },
+  guestModalNote: {
+    fontSize: 12,
+    textAlign: 'center',
+    opacity: 0.7,
+  },
+
+  // 👇 Guest badge styles
+  guestBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    marginTop: 12,
+    gap: 6,
+  },
+  guestBadgeText: {
+    fontSize: 14,
+    fontWeight: '600',
   },
 });
