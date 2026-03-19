@@ -1,4 +1,4 @@
-export const BASE_URL = "http://192.168.29.43:5000";
+export const BASE_URL = "https://sattvik.hemkumar.cloud";
 
 export const API = {
   LOGIN: `${BASE_URL}/api/auth/login`,

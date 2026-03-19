@@ -26,6 +26,7 @@ import Colors from "@/constants/colors";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { emitCartUpdate } from "../../constants/CartEventEmitter";
 import { useTheme } from "../data/ThemeContext";
+import SuccessPopup from "../../components/SuccessPopup";
 
 const { width, height } = Dimensions.get("window");
 
@@ -390,6 +391,8 @@ export default function MenuScreen() {
   const [selectedItem, setSelectedItem] = useState<any>(null);
   const [quantity, setQuantity] = useState(1);
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [addedItemName, setAddedItemName] = useState("");
 
   // Filter states
   const [showFiltersModal, setShowFiltersModal] = useState(false);
@@ -672,7 +675,8 @@ export default function MenuScreen() {
     emitCartUpdate(updatedCount);
     
     // Show success message
-    Alert.alert("Success", `${item.name} (x${qty}) ${t('addedToCart')}`);
+    setAddedItemName(item.name);
+    setShowSuccessPopup(true);
     
     // Optional: Haptic feedback
     if (Platform.OS === 'ios') {
@@ -722,7 +726,8 @@ export default function MenuScreen() {
       setQuantity(1);
       
       // Show success message for logged in user
-      Alert.alert("Success", `${item.name} (x${quantity}) ${t('addedToCart')}`);
+      setAddedItemName(item.name);
+      setShowSuccessPopup(true);
       
       router.push("/cart");
 
@@ -755,7 +760,8 @@ export default function MenuScreen() {
         setSelectedItem(null);
         setQuantity(1);
         
-        Alert.alert(t('addedToCart'), `${item.name} ${t('itemAdded')}`);
+        setAddedItemName(item.name);
+        setShowSuccessPopup(true);
         return;
       }
 
@@ -778,7 +784,8 @@ export default function MenuScreen() {
       const newCount = currentCount ? JSON.parse(currentCount) + quantity : quantity;
       await emitCartUpdate(newCount);
 
-        Alert.alert(t('addedToCart'), `${item.name} ${t('itemAdded')}`);
+        setAddedItemName(item.name);
+        setShowSuccessPopup(true);
 
       setShowItemModal(false);
       setSelectedItem(null);
@@ -1235,37 +1242,7 @@ export default function MenuScreen() {
         </View>
 
         {/* ===== MAIN CONTENT ===== */}
-        {loading ? (
-          <Animated.View
-            style={{
-              flex: 1,
-              justifyContent: "center",
-              alignItems: "center",
-              opacity: fadeAnim,
-              transform: [{ scale: scaleAnim }]
-            }}
-          >
-            <Animated.View
-              style={{
-                transform: [
-                  {
-                    rotate: rotateAnim.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ["0deg", "360deg"],
-                    }),
-                  },
-                ],
-              }}
-            >
-              <Ionicons name="restaurant" size={60} color={colors.primary} />
-            </Animated.View>
-
-            <Text style={{ marginTop: 16, fontSize: 16, color: colors.text }}>
-              {t('loading')}
-            </Text>
-          </Animated.View>
-
-        ) : itemsToDisplay.length === 0 ? (
+        {itemsToDisplay.length === 0 && !loading ? (
           <View style={styles.emptyContainer}>
             <Ionicons name="fast-food-outline" size={80} color={colors.border} />
             <Text style={[styles.emptyText, { color: colors.subText }]}>{t('noItemsFound')}</Text>
@@ -1578,6 +1555,12 @@ export default function MenuScreen() {
             </View>
           </Modal>
         )}
+        {/* Success Popup */}
+        <SuccessPopup 
+          visible={showSuccessPopup} 
+          itemName={addedItemName} 
+          onClose={() => setShowSuccessPopup(false)} 
+        />
       </Animated.View>
     </KeyboardAvoidingView>
   );

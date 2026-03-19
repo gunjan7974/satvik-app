@@ -1532,17 +1532,6 @@ useEffect(() => {
     },
   });
 
-  if (loading) {
-    return (
-      <View style={{ flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: colors.background }}>
-        <Ionicons name="person-circle-outline" size={60} color={colors.primary} />
-        <Text style={{ marginTop: 10, fontSize: 16, color: colors.text }}>
-          {t("loadingProfile")}
-        </Text>
-      </View>
-    );
-  }
-
   // If guest user, show guest view
   if (isGuestUser) {
     return renderGuestView();

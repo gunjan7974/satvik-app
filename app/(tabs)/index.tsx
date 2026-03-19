@@ -26,9 +26,10 @@ import * as Haptics from 'expo-haptics';
 import { useTheme } from "../data/ThemeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { emitCartUpdate } from "../../constants/CartEventEmitter";
+import SuccessPopup from "../../components/SuccessPopup";
 
 
-const BASE_URL = "http://192.168.29.43:5000"
+const BASE_URL = "https://sattvik.hemkumar.cloud"
 
 /* ================= TYPE DEFINITIONS ================= */
 interface FoodItem {
@@ -314,6 +315,8 @@ export default function HomeScreen() {
   const [quantity, setQuantity] = useState(1);
   const [securityLevel, setSecurityLevel] = useState("standard");
   const [favorites, setFavorites] = useState<string[]>([]);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [addedItemName, setAddedItemName] = useState("");
 
   // Guest cart state
   const [guestCart, setGuestCart] = useState<GuestCartItem[]>([]);
@@ -421,7 +424,8 @@ export default function HomeScreen() {
     emitCartUpdate(updatedCount);
     
     // Show success message with options
-    Alert.alert(t('addedToCart'), `${item.name} ${t('itemAdded')}`);
+    setAddedItemName(item.name);
+    setShowSuccessPopup(true);
     
     // Optional: Haptic feedback
     if (Platform.OS === 'ios') {
@@ -661,7 +665,8 @@ export default function HomeScreen() {
       setQuantity(1);
       setSelectedItem(null);
 
-      Alert.alert("Success", "Item added to cart");
+      setAddedItemName(item.name);
+      setShowSuccessPopup(true);
 
     } catch (error: any) {
       console.log("ORDER ERROR:", error.response?.data || error.message);
@@ -1261,53 +1266,6 @@ export default function HomeScreen() {
       badgeColor: "#9C88FF",
     },
   ];
-
-  if (loading) {
-    return (
-      <Animated.View
-        style={[
-          styles.container,
-          {
-            backgroundColor: colors.background,
-            justifyContent: "center",
-            alignItems: "center",
-            opacity: fadeAnim,
-            transform: [
-              { scale: scaleHeader },
-              { translateY: fadeInUp }
-            ]
-          },
-        ]}
-      >
-        <Animated.View
-          style={{
-            transform: [
-              {
-                rotate: rotateAnim.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ["0deg", "360deg"],
-                }),
-              },
-            ],
-          }}
-        >
-          <Ionicons name="fast-food-outline" size={60} color={colors.primary} />
-        </Animated.View>
-
-        <Animated.Text
-          style={{
-            marginTop: 20,
-            fontSize: 18,
-            fontWeight: "600",
-            color: colors.text,
-            opacity: fadeAnim,
-          }}
-        >
-          {t("loadingFood")}
-        </Animated.Text>
-      </Animated.View>
-    );
-  }
 
   return (
     <Animated.ScrollView
@@ -2011,6 +1969,13 @@ export default function HomeScreen() {
           </View>
         </Modal>
       )}
+
+      {/* Reusable Success Popup */}
+      <SuccessPopup 
+        visible={showSuccessPopup} 
+        itemName={addedItemName} 
+        onClose={() => setShowSuccessPopup(false)} 
+      />
     </Animated.ScrollView>
   );
 }

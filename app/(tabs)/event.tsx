@@ -1469,22 +1469,6 @@ export default function EventsBookingScreen() {
     </Modal>
   );
 
-  if (loading) {
-    return (
-      <SafeAreaView style={{
-        flex: 1,
-        justifyContent: "center",
-        alignItems: "center",
-        backgroundColor: colors.background
-      }}>
-        <Ionicons name="calendar" size={60} color={colors.primary} />
-        <Text style={{ marginTop: 12, fontSize: 16, color: colors.text }}>
-          {t("loading")}
-        </Text>
-      </SafeAreaView>
-    );
-  }
-
   return (
     <SafeAreaView
       style={[

@@ -840,37 +840,6 @@ export default function OrderScreen() {
   };
 
   /* ================= UI ================= */
-  if (loading) {
-    return (
-      <Animated.View style={[styles.container, {
-        backgroundColor: colors.background,
-        justifyContent: "center",
-        alignItems: "center",
-        opacity: fadeAnim,
-        transform: [{ scale: scaleAnim }]
-      }]}>
-        <Animated.View style={{
-          transform: [{
-            rotate: slideAnim.interpolate({
-              inputRange: [0, 30],
-              outputRange: ['0deg', '360deg']
-            })
-          }]
-        }}>
-          <Ionicons name="hourglass-outline" size={60} color={colors.primary} />
-        </Animated.View>
-        <Animated.Text style={[styles.loadingText, {
-          color: colors.text,
-          marginTop: 20,
-          opacity: fadeAnim,
-          transform: [{ translateY: slideAnim }]
-        }]}>
-          {t("loadingOrders")}
-        </Animated.Text>
-      </Animated.View>
-    );
-  }
-
   // 👇 If guest user, show guest view
   if (isGuestUser) {
     return renderGuestView();

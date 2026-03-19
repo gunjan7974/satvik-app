@@ -4,7 +4,7 @@
     "slug": "sattvikKaleva",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/logo.png",
     "scheme": "sattvikkaleva",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
@@ -24,9 +24,7 @@
     "android": {
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "foregroundImage": "./assets/images/logo.png"
       },
       "splash": {
         "image": "./assets/images/logo.png",
@@ -34,11 +32,12 @@
         "backgroundColor": "#E6F4FE"
       },
       "edgeToEdgeEnabled": true,
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.gunjanexpo.sattvikkaleva"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/logo.png"
     },
     "plugins": [
       "expo-router",
@@ -46,13 +45,9 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/logo.png",
-          "imageWidth": 200,
+          "imageWidth": 250,
           "resizeMode": "contain",
-          "backgroundColor": "#E6F4FE",
-          "dark": {
-            "image": "./assets/images/logo.png",
-            "backgroundColor": "#000000"
-          }
+          "backgroundColor": "#E6F4FE"
         }
       ],
       "@react-native-community/datetimepicker"
@@ -60,6 +55,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "dcce42ce-bf09-4248-9526-a593158471b0"
+      }
+    },
+    "owner": "gunjan_expo"
   }
 }
