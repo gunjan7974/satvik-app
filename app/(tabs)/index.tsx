@@ -29,7 +29,7 @@ import { emitCartUpdate } from "../../constants/CartEventEmitter";
 import SuccessPopup from "../../components/SuccessPopup";
 
 
-const BASE_URL = "https://sattvik.hemkumar.cloud"
+const BASE_URL = "10.223.106.75:5000/api"
 
 /* ================= TYPE DEFINITIONS ================= */
 interface FoodItem {

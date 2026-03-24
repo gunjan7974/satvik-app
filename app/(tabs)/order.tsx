@@ -618,7 +618,6 @@ export default function OrderScreen() {
           styles.guestContainer,
           { backgroundColor: colors.background },
           {
-            opacity: fadeAnim,
             transform: [{ scale: scaleAnim }, { translateY: slideAnim }]
           }
         ]}
@@ -775,7 +774,7 @@ export default function OrderScreen() {
           styles.actionButtons,
           {
             borderColor: colors.border,
-            backgroundColor: mode === 'dark' ? colors.background : '#F8F8F8',
+            backgroundColor: mode === 'dark' ? colors.card : '#F8F8F8',
             opacity: cardOpacity,
           }
         ]}>
@@ -848,7 +847,6 @@ export default function OrderScreen() {
   return (
     <Animated.View style={[styles.container, {
       backgroundColor: colors.background,
-      opacity: fadeAnim,
     }]}>
       {/* FILTER TABS with animation */}
       <Animated.View style={[
