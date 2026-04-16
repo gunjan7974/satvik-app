@@ -872,11 +872,7 @@ export default function EventsBookingScreen() {
     try {
       const response = await fetch(`${BASE_URL}/api/events/types`);
       const data = await response.json();
-      const formatted = data.map((item: any) => ({
-        ...item,
-        image: item.image ? (item.image.startsWith('http') ? item.image : `${BASE_URL}${item.image}`) : null,
-      }));
-      setEventTypes(formatted);
+      setEventTypes(data);
     } catch (error) {
       console.log("Error fetching event types:", error);
     }
@@ -886,11 +882,7 @@ export default function EventsBookingScreen() {
     try {
       const response = await fetch(`${BASE_URL}/api/events/halls`);
       const data = await response.json();
-      const formatted = data.map((item: any) => ({
-        ...item,
-        image: item.image ? (item.image.startsWith('http') ? item.image : `${BASE_URL}${item.image}`) : null,
-      }));
-      setPartyHalls(formatted);
+      setPartyHalls(data);
     } catch (error) {
       console.log("Error fetching halls:", error);
     }
@@ -902,7 +894,6 @@ export default function EventsBookingScreen() {
       const data = await response.json();
       const formatted = data.map((item: any) => ({
         ...item,
-        image: item.image ? (item.image.startsWith('http') ? item.image : `${BASE_URL}${item.image}`) : null,
         selected: false,
       }));
       setAllServices(formatted);
