@@ -504,7 +504,20 @@ export default function MenuScreen() {
       }
 
       const response = await axios.get(url);
-      setMenuItems(response.data);
+      
+      const rawData = response.data.menus || (Array.isArray(response.data) ? response.data : []);
+      
+      const formattedData = rawData.map((item: any) => ({
+        ...item,
+        id: item._id,
+        // Ensure name is present (backend might return name, frontend expects name)
+        name: item.name || item.title,
+        // Prefix relative image paths with BASE_URL
+        image: item.image ? (item.image.startsWith('http') ? item.image : `${BASE_URL}${item.image}`) : null,
+        price: Number(item.price) || 0
+      }));
+
+      setMenuItems(formattedData);
 
     } catch (error) {
       console.log("Menu Fetch Error:", error);

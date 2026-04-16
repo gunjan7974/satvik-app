@@ -546,9 +546,14 @@ export default function CartScreen() {
 
       // Fetch all foods and filter by favIds
       const response = await axios.get(`${BASE_URL}/api/foods`);
-      const allFoods = response.data;
+      const allFoods = response.data.menus || (Array.isArray(response.data) ? response.data : []);
       
-      const filtered = allFoods.filter((f: any) => favIds.includes(f._id));
+      const filtered = allFoods
+        .filter((f: any) => favIds.includes(f._id))
+        .map((item: any) => ({
+          ...item,
+          image: item.image ? (item.image.startsWith('http') ? item.image : `${BASE_URL}${item.image}`) : null,
+        }));
       setFavoriteItems(filtered);
     } catch (error) {
       console.log('Error fetching favorite items:', error);

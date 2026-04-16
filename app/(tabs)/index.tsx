@@ -29,7 +29,7 @@ import { emitCartUpdate } from "../../constants/CartEventEmitter";
 import SuccessPopup from "../../components/SuccessPopup";
 
 
-const BASE_URL = "10.223.106.75:5000/api"
+import { BASE_URL } from "../../config/api";
 
 /* ================= TYPE DEFINITIONS ================= */
 interface FoodItem {
@@ -461,12 +461,14 @@ export default function HomeScreen() {
       setLoading(true);
 
       const response = await axios.get(`${BASE_URL}/api/foods`);
+      
+      const rawData = response.data.menus || (Array.isArray(response.data) ? response.data : []);
 
-      const formattedData = response.data.map((item: any) => ({
+      const formattedData = rawData.map((item: any) => ({
         id: item._id,
         name: item.name,
         subname: item.category || "",
-        image: item.image,
+        image: item.image ? (item.image.startsWith('http') ? item.image : `${BASE_URL}${item.image}`) : null,
         color: "#FF6B35",
         items: `₹${item.price}`,
         price: item.price,
