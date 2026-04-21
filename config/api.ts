@@ -1,11 +1,11 @@
-export const BASE_URL = "10.223.106.75:5000/api";
+export const BASE_URL = "http://192.168.29.43:5000/api";
 
 export const API = {
-  LOGIN: `${BASE_URL}/api/auth/login`,
-  REGISTER: `${BASE_URL}/api/auth/register`,
-  FOODS: `${BASE_URL}/api/foods`,
-  CART: `${BASE_URL}/api/cart`,
-  ORDER: `${BASE_URL}/api/orders`,
+  LOGIN: `${BASE_URL}/auth/login`,
+  REGISTER: `${BASE_URL}/auth/register`,
+  FOODS: `${BASE_URL}/foods`,
+  CART: `${BASE_URL}/cart`,
+  ORDER: `${BASE_URL}/orders`,
 };
 
 export default BASE_URL;
