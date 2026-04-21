@@ -22,7 +22,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { FadeIn, FadeInDown } from "react-native-reanimated";
 
 import { useAuth } from "../data/AuthContext";
-import { BASE_URL } from "../../config/api";
+import { BASE_URL, API } from "../../config/api";
 
 const { width, height } = Dimensions.get('window');
 const isSmallDevice = width < 375;
@@ -122,7 +122,7 @@ export default function Login() {
 
     try {
       const response = await axios.post(
-        `${BASE_URL}/api/auth/login`,
+        API.LOGIN,
         {
           email: email.trim().toLowerCase(),
           password: password.trim(),
